@@ -4,6 +4,291 @@ module cs_stat
   real,parameter::log2o3=log10(2.0)/log10(3.0)
   real,parameter::sqrt2=sqrt(2.0)
   contains
+
+
+
+  subroutine Clim_Hovm_daily(filename,vname,timeindex,data_hovm,clat,clon,xlat,xlon_lb,xlon_ub,dlat,ncell,nday,nyear,nlon,nlat,ntime)
+
+    use netcdf
+
+    implicit none
+    integer,intent(in) :: nlon,nlat,ntime
+    character (len = *), intent(in):: FILENAME 
+    character (len = *), intent(in):: vname 
+    integer, intent(in) :: nday,nyear,ncell
+    integer,dimension(nyear,nday),intent(in) ::timeindex 
+    real,dimension(ncell),intent(in) ::xlat 
+    real,                 intent(in) ::xlon_lb 
+    real,                 intent(in) ::xlon_ub 
+    real,                 intent(in) ::dlat 
+    real                             ::xlat_lb 
+    real                             ::xlat_ub 
+    integer                          ::numpoint 
+    real, dimension(nlat,nlon) ,intent(in )         :: clat
+    real, dimension(nlat,nlon) ,intent(in )         :: clon
+    real, dimension(ncell,nday),intent(out)         :: data_hovm
+    real, dimension(:, :,:),allocatable             :: data_temp
+    real, dimension(:, :,:),allocatable             :: data_raw
+
+    integer :: ncid, varid,dimid
+    integer :: icell, iyear, ind,i,j,ipoint
+    allocate(data_raw(nlon,nlat,ntime))
+    allocate(data_temp(nlon,nlat,nday))
+
+    call check( nf90_open(FILENAME, NF90_NOWRITE, ncid) )
+    call check( nf90_inq_varid(ncid, vname, varid) )
+    call check( nf90_get_var(ncid, varid, data_raw) )
+    call check( nf90_close(ncid) )
+    data_temp=0.0
+    data_hovm=0.0
+    do iyear=1,nyear
+      do ind=1,nday
+        do i=1,nlat
+          do j=1,nlon
+            data_temp(j,i,ind)=data_temp(j,i,ind)+data_raw(j,i,timeindex(iyear,ind))
+          end do
+        end do
+      end do
+    end do
+    data_temp(:,:,:)=data_temp(:,:,:)/nyear
+    do icell=1,ncell
+      numpoint=0.0
+      xlat_ub=xlat(icell)+dlat*0.5
+      xlat_lb=xlat(icell)-dlat*0.5
+      do j=1,nlon
+        do i=1,nlat
+          if (clat(i,j)>=xlat_lb.and. clat(i,j)<=xlat_ub .and.  &
+              clon(i,j)>=xlon_lb.and. clon(i,j)<=xlon_ub) then
+            data_hovm(icell,:)=data_hovm(icell,:)+data_temp(j,i,:)
+            numpoint  =numpoint+1
+          end if
+        end do
+      end do
+      if (numpoint>0) then
+        data_hovm(icell,:)=data_hovm(icell,:)/numpoint
+      endif
+    enddo
+  contains
+    subroutine check(status)
+      integer, intent ( in) :: status
+      
+      if(status /= nf90_noerr) then 
+        print *, trim(nf90_strerror(status))
+        stop "Stopped"
+      end if
+    end subroutine check 
+
+ 
+  end subroutine Clim_Hovm_daily
+
+  subroutine pdf_cor_rms(ana_yearly,methodname,vname,&
+                         nlat,nlon,nregs,               &
+                         ntime,nperiods,nyears,ncases,  &
+                         filename,obsfilename,          &
+                         beg_nday,end_nday,             &
+                         mask,maskval,nlandpoints,      &
+                         regmap,                        &
+                         n_bin,x_min,x_max,             &
+                         pdf,pdf_yearly)
+    use netcdf
+
+    implicit none
+    real ,dimension(n_bin,nregs,nperiods,ncases),intent(out)                ::pdf
+    real ,dimension(n_bin,nregs,nperiods,nyears,ncases),intent(out),optional::pdf_yearly
+
+    character (4),intent(in)   ::methodname
+    logical      ,intent(in)   ::ana_yearly  ! whether we will output yearly pdf analysis
+    integer,intent(in) :: nlon,nlat
+    integer,intent(in) :: nlandpoints
+    integer,intent(in) :: ntime ! Pay attention, here ntime is how many time slice actually used in this calculation, 
+                                ! not the whole array
+    integer,intent(in) :: nperiods ! it can be monthly 12 or seasonal 4
+    integer,intent(in) :: nyears   ! total number of years we are gonna analysis
+    integer,intent(in) :: ncases   ! total number of cases we are gonna analysis
+    integer,intent(in) :: nregs    ! total number of regs  we are gonna analysis
+    character (len = *),dimension(ncases),intent(in):: filename
+    character (len = *),                  intent(in):: obsfilename
+    integer            ,dimension(nperiods,nyears),intent(in) ::beg_nday  ! we assume there is nperiods each one has ndays 
+    integer            ,dimension(nperiods,nyears),intent(in) ::end_nday  ! we assume there is nperiods each one has ndays 
+    real               ,dimension(nlat,nlon)      ,intent(in) ::mask      ! WATCH OUT! the variables from python is C-order!
+    real               ,dimension(nlat,nlon)      ,intent(in) ::regmap    ! WATCH OUT! the variables from python is C-order!
+    !beg_nday is the number of days since 0001-01-01 00:00 of each period's first day and end_nday is the last day 
+    real,                  intent(in)  :: x_min,x_max
+    integer,               intent(in)  :: n_bin
+    integer,               intent(in)  :: maskval
+    character (len = *), intent(in):: vname 
+    integer, parameter :: dims = 4
+    integer :: start(dims), count(dims)
+    integer :: ncid, varid,dimid
+    integer :: index0       ! first day's index of each index
+    integer :: iyear,icase,iperiod,ipoint,i,j,ireg
+    integer :: beg_ind_obs,end_ind_obs
+    integer :: beg_ind_sim,end_ind_sim
+    integer :: nt
+    real, dimension(:, :,:),allocatable             :: data_obs
+    real, dimension(:, :,:),allocatable             :: data_sim
+    real, dimension(nlandpoints)                    :: temp_1d
+    real, dimension(nlat,nlon)                      :: temp_2d
+    real, dimension(nlat,nlon,nyears)               :: temp_3d
+    real, dimension(1)                              :: firstday_obs,firstday ! first day of each dataset
+
+    allocate(data_obs(nlon,nlat,ntime))
+    allocate(data_sim(nlon,nlat,ntime))
+
+    ! read in obs
+    call check( nf90_open(obsfilename, NF90_NOWRITE, ncid) )
+    call check( nf90_inq_varid(ncid, "time", varid) )
+    count(1:1) = (/ 1/); start(1:1) = (/ 1/)
+    call check( nf90_get_var(ncid, varid, firstday_obs,start, count) )
+    index0=beg_nday(1,1)-firstday_obs(1)
+    count(1:3) = (/ nlon, nlat, ntime/); start(1:3) = (/ 1, 1, index0 /)
+    call check( nf90_inq_varid(ncid, vname, varid) )
+    call check( nf90_get_var(ncid, varid, data_obs) )
+    call check( nf90_close(ncid) )
+    do icase=1,ncases
+      call check( nf90_open(obsfilename, NF90_NOWRITE, ncid) )
+      call check( nf90_inq_varid(ncid, "time", varid) )
+      count(1:1) = (/ 1/); start(1:1) = (/ 1/)
+      call check( nf90_get_var(ncid, varid, firstday,start, count) )
+      index0=beg_nday(1,1)-firstday(1)
+      count(1:3) = (/ nlon, nlat, ntime/); start(1:3) = (/ 1, 1, index0 /)
+      call check( nf90_inq_varid(ncid, trim(vname), varid) )
+      call check( nf90_get_var(ncid, varid, data_sim,start, count) )
+      call check( nf90_close(ncid) )
+      do iperiod=1,nperiods
+        do iyear=1,nyears
+
+          beg_ind_obs=beg_nday(iperiod,iyear)-firstday_obs(1)
+          end_ind_obs=end_nday(iperiod,iyear)-firstday_obs(1)
+          beg_ind_sim=beg_nday(iperiod,iyear)-firstday(1)
+          end_ind_sim=end_nday(iperiod,iyear)-firstday(1)
+          nt=end_ind_sim-beg_ind_sim+1
+          do i=1,nlat
+            do j=1,nlon
+              if (mask(i,j)==maskval) then
+                if (trim(methodname)=="cor") then
+                  temp_3d(j,i,iyear)=corrcoef_1d(data_obs(j,i,beg_ind_obs:end_ind_obs), &
+                                           data_sim(j,i,beg_ind_sim:end_ind_sim),nt)
+                elseif (trim(methodname)=="rmse") then
+                  temp_3d(j,i,iyear)=rmse_1d(data_obs(j,i,beg_ind_obs:end_ind_obs), &
+                                           data_sim(j,i,beg_ind_sim:end_ind_sim),nt)
+                else
+                  print*,("No such option, you have to choose between cor and rmse")
+                  stop
+                endif
+              end if
+            enddo 
+          enddo 
+          if (ana_yearly) then
+            do ireg=1,nregs
+              ipoint=0
+              temp_1d=0.0
+              do i=1,nlat
+                do j=1,nlon
+                  if (ireg==regmap(i,j)) then
+                    ipoint=ipoint+1
+                    temp_1d(ipoint)=temp_3d(j,i,iyear)
+                  end if
+                enddo 
+              enddo 
+              call smaplesPDF(temp_1d(1:ipoint),pdf_yearly(:,ireg,iperiod,iyear,icase),ipoint,n_bin,x_min,x_max)
+            enddo 
+          endif
+        enddo 
+        if (.not.ana_yearly) then
+          do ireg=1,nregs
+            ipoint=0
+            temp_1d=0.0
+            do i=1,nlat
+              do j=1,nlon
+                if (ireg==regmap(i,j)) then
+                  ipoint=ipoint+1
+                  temp_2d(:,ipoint)=temp_3d(j,i,:)
+                end if
+              enddo 
+            enddo 
+            call smaplesPDF_2d(temp_2d(:,1:ipoint),pdf(:,ireg,iperiod,icase),ipoint,nyears,n_bin,x_min,x_max)
+          enddo 
+        endif
+      enddo 
+    enddo 
+
+   contains
+    subroutine smaplesPDF_2d(data_i,pdf,n,nt,n_bin,x_min,x_max)
+      ! this is a function which can estimate smaple points' pdf 
+      real, dimension(n,nt) ,intent(in)  :: data_i
+      real, dimension(n_bin),intent(out) :: pdf
+      integer,               intent(in)  :: n
+      integer,               intent(in)  :: nt
+      real,                  intent(in)  :: x_min,x_max
+      integer,               intent(in)  :: n_bin
+      integer                      :: bin_i
+      real                         :: bin_size
+      real                         :: x_ub,x_lb
+      if (x_max>x_min) then
+        bin_size=(x_max-x_min)/bin_i
+        pdf(:)=0.0
+        do bin_i=1,n_bin
+          x_lb=x_min+(bin_i-1)*bin_size
+          x_ub=x_min+(bin_i  )*bin_size
+          do i=1,n
+            do j=1,nt
+              if (x_lb<=data_i(j,i).and.data_i(j,i)<x_ub) then
+                pdf(bin_i)=pdf(bin_i)+1
+              endif
+            end do
+          end do
+        end do
+        pdf(:)=pdf(:)/n/(x_max-x_min)
+      else
+        print*,"input x_max should be larger thant x_min"
+        stop
+      endif
+    end subroutine smaplesPDF_2d
+
+
+    subroutine smaplesPDF(data_i,pdf,n,n_bin,x_min,x_max)
+      ! this is a function which can estimate smaple points' pdf 
+      real, dimension(n)    ,intent(in)  :: data_i
+      real, dimension(n_bin),intent(out) :: pdf
+      integer,               intent(in)  :: n
+      real,                  intent(in)  :: x_min,x_max
+      integer,               intent(in)  :: n_bin
+      integer                      :: bin_i
+      real                         :: bin_size
+      real                         :: x_ub,x_lb
+      if (x_max>x_min) then
+        bin_size=(x_max-x_min)/bin_i
+        pdf(:)=0.0
+        do bin_i=1,n_bin
+          x_lb=x_min+(bin_i-1)*bin_size
+          x_ub=x_min+(bin_i  )*bin_size
+          do i=1,n
+            if (x_lb<=data_i(i).and.data_i(i)<x_ub) then
+              pdf(bin_i)=pdf(bin_i)+1
+            endif
+          end do
+        end do
+        pdf(:)=pdf(:)/n/(x_max-x_min)
+      else
+        print*,"input x_max should be larger thant x_min"
+        stop
+      endif
+    end subroutine smaplesPDF
+
+    subroutine check(status)
+      integer, intent ( in) :: status
+      
+      if(status /= nf90_noerr) then 
+        print *, trim(nf90_strerror(status))
+        stop "Stopped"
+      end if
+    end subroutine check 
+
+   
+  end subroutine pdf_cor_rms
+
+
 subroutine kendallS(x,n,pvalue)
 integer, intent(in)  ::n
 real, intent(in), dimension(n)::x
