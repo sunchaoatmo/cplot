@@ -23,12 +23,17 @@ def readini():
   plottype=config.get('PLOT','plottype')
   obsname=config.get('PLOT','obsname')
   GCM_name=config.get('PLOT','GCM_name')
+  regmapfile=config.get('PLOT','regmapfile')
   Hovmoller={}
   section="Hovmoller"
   for option in config.options(section):
     Hovmoller[option]=config.getfloat(section, option)
+  section="PDF"
+  PDF={}
+  for option in config.options(section):
+    PDF[option]=config.getint(section, option)
   Time_control={}
   section="Time_control"
   for option in config.options(section):
     Time_control[option]=config.getint(section, option)
-  return (period,vnames,cases,nlevel,datapath,cutpoints,neof,masktype,method,plottype,shapefile,obsname,GCM_name,Hovmoller,Time_control)
+  return (period,vnames,cases,nlevel,datapath,cutpoints,neof,masktype,method,plottype,shapefile,obsname,GCM_name,Hovmoller,Time_control,PDF,regmapfile)

@@ -9,6 +9,7 @@ sim_nicename={"ERI":"ERI",
              "ERI_run_0":"old CWRF",
              "new_ERI_run_0":"CWRF\nMor",
              "new_ERI_gsfc":"CWRF",
+             "new_ERI_albedo":"Albedo",
 #             "new_ERI_gsfc":"CWRF\nGSFC",
              "new_ERI_morr":"Mor",
              "run_00":"CWRF",
@@ -658,8 +659,8 @@ plotres['PrMAX']['violion']=True
 
 #plotres['PRAVG']['cleve0']=range(0,11) #list(drange(0.2,8,0.2))  #np.linspace(1,10,num=20) #range(1,11)
 #plotres['PRAVG']['cleve1']=range(0,11)
-plotres['PRAVG']['cleve0']=range(0,10) #list(drange(0.2,8,0.2))  #np.linspace(1,10,num=20) #range(1,11)
-plotres['PRAVG']['cleve1']=range(0,10)
+plotres['PRAVG']['cleve0']=range(0,18,2) #list(drange(0.2,8,0.2))  #np.linspace(1,10,num=20) #range(1,11)
+plotres['PRAVG']['cleve1']=range(0,18,2)
 plotres['PRAVG']['cleve2']=np.linspace(-5,5,21)
 plotres['PRAVG']['cleve3']=range(10)
 #  import colormaps as cmaps

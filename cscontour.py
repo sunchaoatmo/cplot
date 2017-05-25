@@ -39,6 +39,15 @@ def seasonalmap(data,vname):
   elif data.method=="rmse":
     clevel=plotres[vname]['cleve3']
     cmp   =plt.get_cmap('YlOrRd') #plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
+  elif data.method=="trend":
+    if vname=="PRAVG":
+      clevel=range(-10,11); [x*1 for x in range(-5,6)]
+      clevel2=[x*1 for x in range(-10,11)]
+    else:
+      clevel=range(-20,22,2);
+      clevel2=[x*2 for x in range(-10,11)]
+    clevel.remove(0)
+    cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
   else:
     clevel=plotres[vname]['cleve1']
     cmp=plotres[vname]['cmp1']
@@ -48,6 +57,10 @@ def seasonalmap(data,vname):
     page=0
 
   SUPTITLE="%s-%s %s(%s)"%(str(YB),str(YE),vname,plotres[vname]['unit'])
+  if data.method=="trend":
+    SUPTITLE="%s-%s %s trend %s/100year"%(str(data.yb),str(data.ye),vname,plotres[vname]['unit'])
+  else:
+    SUPTITLE="%s-%s %s(%s)"%(str(data.yb),str(data.ye),vname,plotres[vname]['unit'])
   fig.suptitle(SUPTITLE, fontsize=12, fontweight='bold')
 
 ###################################### Plot Contour ########################################

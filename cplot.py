@@ -3,7 +3,7 @@ from config  import readini
 #from context import reginalmetfield
 
 (period,vnames,cases,nlevel,datapath,cutpoints,neof,
- masktype,method,plottype,shapefile,obsname,GCM_name,Hovmoller,Time_control)=readini()
+ masktype,method,plottype,shapefile,obsname,GCM_name,Hovmoller,Time_control,PDF,regmapfile)=readini()
 
 wrfinputfile="%s/wrfinput_d01"%datapath
 landmaskfile="%s/landmask.nc"%datapath
@@ -21,8 +21,8 @@ elif period=="monthly":
 elif period=="daily":
   from context import daily_data
   cwrfdata=daily_data(period,vnames,cases,nlevel,cutpoints,neof,
-                 method,plottype,shapefile,datapath,obsname,GCM_name,Hovmoller,Time_control,
-                 wrfinputfile,landmaskfile,masktype,Hovmoller)
+                 method,plottype,shapefile,datapath,obsname,GCM_name,Time_control,
+                 wrfinputfile,landmaskfile,masktype,Hovmoller,PDF,regmapfile)
 
 cwrfdata.Read()
 cwrfdata.Analysis()

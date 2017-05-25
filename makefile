@@ -1,11 +1,11 @@
-CC=gcc
-FC=gfortran
+CC=icc
+FC=ifort
 AR=ar
-FFLAGS=-fPIC 
+FFLAGS=-fPIC -O3
 ARFLAGS         =      ru
-INCLUDES =
+INCLUDES = -I/usr/local/netcdf_with_hdf/include
 
-F2PY_FLAGS= -I./ 
+F2PY_FLAGS= -I./ -I/usr/local/netcdf_with_hdf/include 
 
 SRCS = cs_stat.f90 
 
@@ -16,7 +16,7 @@ all:    ${MODULE}.so
 	@echo  ${MODULE}.so has been compiled
 
 ${MODULE}.so: ${MODULE}.f90 libpost.a #$(OBJS)
-	$(F2PY) $(F2PY_FLAGS) --f90flags=-fPIC  -m ${MODULE} -c $< #$(OBJS) #${MODULE}.F90 
+	$(F2PY) $(F2PY_FLAGS) --fcompiler=intelem --f90flags=-fPIC -L/usr/local/netcdf_with_hdf/lib -lnetcdff -lnetcdf  -m ${MODULE} -c $< #$(OBJS) #${MODULE}.F90 
 
 libpost.a: $(OBJS)
 	$(AR) ru libpost.a $(OBJS) 

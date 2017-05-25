@@ -27,10 +27,14 @@ def eofplot(data,vname):
         sign[(name,sidename,npc)]=1.0
   sign[('DJF','CWRF',0)]=-1.0
   sign[('DJF','CWRF',1)]=-1.0
+  sign[('DJF','Albedo',0)]=-1.0
+  sign[('DJF','Albeod',1)]=-1.0
   sign[('DJF','ERI',2)]=-1.0
 
   sign[('JJA','CWRF',0)]=-1.0
   sign[('JJA','CWRF',1)]=-1.0
+  sign[('JJA','Albedo',0)]=-1.0
+  sign[('JJA','Albedo',1)]=-1.0
 
   sign[('SON','ERI',1)]=-1.0
   print("Got it!")
@@ -68,7 +72,7 @@ def eofplot(data,vname):
       var=data.plotdata[data.obsname][vname][k][2]
       eof=data.plotdata[data.obsname][vname][k][0]
       ax1.set_title("Variance Explained:%5.2f%%"%(var[npc]*100),fontsize=4)
-      for case in data.cases:
+      for icase,case in enumerate(data.cases):
         linewidth=0.4
         linestyle="-"
         if case=="ERI":
@@ -78,7 +82,7 @@ def eofplot(data,vname):
         elif "RegCM" in case:
           color1=tableau20[-2]
         else:
-          color1='r'
+          color1=tableau20[2*icase]
         pcs=data.plotdata[case][vname][k][1]
         plt.plot(time_axis,sign[(name,sidename,npc)]*pcs[:,npc],linewidth=linewidth, linestyle=linestyle,
              color=color1,markersize=2,label=sim_nicename[case])
