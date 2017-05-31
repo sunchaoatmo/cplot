@@ -27,7 +27,7 @@ class field(object):
 class reginalmetfield(field):
   def __init__(self,period,vnames,cases,nlevel,cutpoints,neof,
                method,plottype,shapefile,datapath,obsname,GCM_name,Time_control,
-               wrfinputfile,landmaskfile,masktype,maskval=1,regmapfile=None):
+               wrfinputfile,landmaskfile,masktype,maskval=0,regmapfile=None):
     from netCDF4 import Dataset
     import numpy as np
 
@@ -44,7 +44,8 @@ class reginalmetfield(field):
     self.lat=wrfinput.variables['CLAT'][0,cutpoints:-cutpoints,cutpoints:-cutpoints]
     self.lon=wrfinput.variables['CLONG'][0,cutpoints:-cutpoints,cutpoints:-cutpoints]
     self.nlat,self.nlon=self.lat.shape
-    self.maskval=1
+    self.maskval=maskval
+    self.masktype=masktype
     if masktype==1:
       self.mask= (np.logical_and(lm.variables["landmask"][cutpoints:-cutpoints,cutpoints:-cutpoints],
                                               wrfinput.variables["LANDMASK"][0,cutpoints:-cutpoints,cutpoints:-cutpoints] ))
@@ -54,6 +55,7 @@ class reginalmetfield(field):
     if regmapfile:
       regmapnc    =Dataset(regmapfile)
       self.regmap =regmapnc.variables['reg_mask'][cutpoints:-cutpoints,cutpoints:-cutpoints]
+      self.regnames=regmapnc.variables['regname']
       self.nregs  =np.max(self.regmap)
 
 class seasonal_data(reginalmetfield):
@@ -171,24 +173,24 @@ class seasonal_data(reginalmetfield):
     if "Taylor" in self.plottype:
       stdrefs={}
       samples={}
-      for k,name in enumerate(seasonname):
-        stdrefs[name]=ma.std(self.plotdata[self.obsname][vname][k,:,:]) #whether or not compressed has no impact on result
-      for casenumber,case in enumerate(self.cases):
-        if case!=self.obsname:
-          tempoutput=[]
-          for k,name in enumerate(seasonname):
-            temp=self.plotdata[case][vname][k,:,:]
-            if self.masktype==0:
-              std_sim=np.std(np.ravel(temp))/stdrefs[name]
-              coef=np.corrcoef(np.ravel(temp),np.ravel(self.plotdata[self.obsname][vname][k,:,:]))
-              cor=coef[0,1]
-            else:
-              std_sim=ma.std(temp)/stdrefs[name]
-              maskval=1
-              coef=np.corrcoef(temp.compressed(),self.plotdata[self.obsname][vname][k,:,:].compressed())
-              cor=coef[0,1]
-            tempoutput.append((std_sim,cor))
-          self.plotdata[case][vname]=tempoutput
+      for vname in self.vnames:
+        for k,name in enumerate(seasonname):
+          stdrefs[name]=ma.std(self.plotdata[self.obsname][vname][k,:,:]) #whether or not compressed has no impact on result
+        for casenumber,case in enumerate(self.cases):
+          if case!=self.obsname:
+            tempoutput=[]
+            for k,name in enumerate(seasonname):
+              temp=self.plotdata[case][vname][k,:,:]
+              if self.masktype==0:
+                std_sim=np.std(np.ravel(temp))/stdrefs[name]
+                coef=np.corrcoef(np.ravel(temp),np.ravel(self.plotdata[self.obsname][vname][k,:,:]))
+                cor=coef[0,1]
+              else:
+                std_sim=ma.std(temp)/stdrefs[name]
+                coef=np.corrcoef(temp.compressed(),self.plotdata[self.obsname][vname][k,:,:].compressed())
+                cor=coef[0,1]
+              tempoutput.append((std_sim,cor))
+            self.plotdata[case][vname]=tempoutput
 
 
   def Plot(self):
@@ -205,6 +207,9 @@ class seasonal_data(reginalmetfield):
       from cstaylor import seasonaltaylor
       for vname in self.vnames:
         seasonaltaylor(self,vname)
+    elif self.plottype=="CTaylor": 
+      from cstaylor import combinedtaylor
+      combinedtaylor(self)
 
   def month2season(data_i,k):
     nyear,nmonth,nlat,nlon=data_i.shape
@@ -302,15 +307,18 @@ class daily_data(reginalmetfield):
         for iperiod in range(nperiods):
           if nperiods==4:
             mb,me=sea2mon[iperiod]
+            yb=year-1 if iperiod==0 else year 
+            ye=year
           elif nperiods==12:
+            ye=year
             mb=iperiod+1
             me=iperiod+2
           else:
             sys.exit("Ouputnperiods is incorrect!")
           db=1
           de= monthrange(year,me)[1]
-          date_b=datetime(year,mb,db,0,0,0)
-          date_e=datetime(year,me,de,0,0,0)
+          date_b=datetime(yb,mb,db,0,0,0)
+          date_e=datetime(ye,me,de,0,0,0)
           beg_nday[iperiod,iyear]=date2num(date_b,units,calendar=calendar)
           end_nday[iperiod,iyear]=date2num(date_e,units,calendar=calendar)
       return beg_nday,end_nday
@@ -336,6 +344,7 @@ class daily_data(reginalmetfield):
             self.plotdata[case][vname]=np.zeros((nlat,nday))
             self.plotdata[case][vname]=cs_stat.cs_stat.clim_hovm_daily(filename=filename,vname=vname,
                                        timeindex=timeinds,clat=self.lat,clon=self.lon,
+                                       mask=self.mask,maskval=self.maskval,
                                        xlat=xlat,xlon_lb=self.start_lon,xlon_ub=self.end_lon,dlat=self.dlat,
                                        ncell=nlat,nday=nday,nyear=nyear,
                                        nlon=self.nlon,nlat=self.nlat,ntime=ntime)
@@ -344,6 +353,7 @@ class daily_data(reginalmetfield):
 
     if "pdf" in self.plottype:
       import cPickle as pickle
+      filenamep=self.plotname+"_dat.p"
       try:
         self.plotdata= pickle.load( open( filenamep, "rb" ) )
       except:
@@ -353,19 +363,20 @@ class daily_data(reginalmetfield):
         nyears=self.ye-self.yb+1
         for vname in self.vnames:
           obsfilename=self.filename[self.obsname][vname]
-          print(obsfilename)
-          filename=[self.filename[case][vname] for case in self.cases]
-          filename=np.asarray(filename, dtype = np.dtype('a'+str(len(filename[0]))))
-          print(filename)
+          filenamelen = np.max(np.array([ len(self.filename[case][vname]) for case in self.cases if case!=self.obsname]))
+          filenamea = [ self.filename[case][vname]+(filenamelen-len(self.filename[case][vname]))*" " 
+                         for case in self.cases if case!=self.obsname]
+          filename = np.array(filenamea,dtype=str(filenamelen)+'c').T
           units   =self.time[self.obsname][vname].units
           calendar=self.time[self.obsname][vname].calendar
           beg_nday,end_nday=select_beg_end(self.yb,self.ye,nperiods,units,calendar)
           ntime =end_nday[-1][-1]-beg_nday[0][0]+1
-#                      filename=filename,obsfilename=obsfilename,          
+          print(self.n_bin,self.x_max)
           self.plotdata["all"][vname]=cs_stat.cs_stat.pdf_cor_rms(
                        ana_yearly=self.ana_yearly,methodname=self.method,vname=vname,
                        nlat=self.nlat,nlon=self.nlon,nregs=self.nregs,               
-                       obsfilename=obsfilename,          
+                       filename=filename,obsfilename=obsfilename,          
+                       filenamelen=filenamelen,
                        ntime=ntime   ,nperiods=nperiods,nyears=nyears,ncases=ncases,  
                        beg_nday=beg_nday,end_nday=end_nday,             
                        mask=self.mask,maskval=self.maskval,nlandpoints=nlandpoints,      
