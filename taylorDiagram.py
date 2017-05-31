@@ -19,7 +19,7 @@ class TaylorDiagram(object):
     r=stddev and theta=arccos(correlation).
     """
 
-    def __init__(self, refstd, fig=None, rect=111, label='_'):
+    def __init__(self, refstd, fig=None, rect=111, label=None,cors=[0.3,0.6,0.9]):
         """Set up Taylor diagram axes, i.e. single quadrant polar
         plot, using mpl_toolkits.axisartist.floating_axes. refstd is
         the reference standard deviation to be compared to.
@@ -36,20 +36,16 @@ class TaylorDiagram(object):
 
         # Correlation labels
         rlocs = NP.concatenate((NP.arange(10)/10.,[0.,0.99]))
-#       rlocs = NP.concatenate((NP.arange(10)/10.,[0.95,0.99]))
         tlocs = NP.arccos(rlocs)        # Conversion to polar angles
         gl1 = GF.FixedLocator(tlocs)    # Positions
         tf1 = GF.DictFormatter(dict(zip(tlocs, map(str,rlocs))))
 
         # Standard deviation axis extent
-        self.smin = 0.6
-        self.smax = 1.4*self.refstd
-        #self.smin = 0
-        #self.smax = 1.6*self.refstd
+        self.smin = 0.0
+        self.smax = 1.8*self.refstd
 
         gl2=GF.MaxNLocator(10) #[0, 0.2,0.4,0.6, 0.8,1.0,1.2,1.4]
         ghelper = FA.GridHelperCurveLinear(tr,
-#                                          extremes=(0,NP.pi/2.0, # 1st quadrant
                                            extremes=(0,NP.pi/2.0, # 1st quadrant
                                                      self.smin,self.smax),
                                            grid_locator1=gl1,
@@ -64,11 +60,6 @@ class TaylorDiagram(object):
 
         ax = FA.FloatingSubplot(fig, rect, grid_helper=ghelper)
         fig.add_subplot(ax)
-#        ax.set_xticks([1,2,3])
-        """
-        #ax.set_xticks(major_ticks)
-        #ax.set_xticklabels(major_ticks)
-        """
 
         # Adjust axes
         PLT.setp(ax.spines.values(), visible=False)
@@ -86,7 +77,6 @@ class TaylorDiagram(object):
         ticks_font=10
         ax.axis["left"].label.set_text("Normalized std.")
         ax.axis["left"].label.set_fontsize(9)
-        #ax.axis["left"].major_ticklabels.set_major_locator(ticker.FixedLocator((pos_list)))
 
         ax.axis["right"].set_axis_direction("top")   # "Y axis"
         ax.axis["right"].toggle(ticklabels=True, label=True)
@@ -103,17 +93,22 @@ class TaylorDiagram(object):
         self.ax = ax.get_aux_axes(tr)   # Polar coordinates
 
         # Add reference point and stddev contour
-        print "Reference std:", self.refstd
-        l, = self.ax.plot([0], self.refstd, color='lime',marker='*',
-                          ls='', ms=10, label=label)
-        PLT.setp(l,  'linewidth', 0.1)
+#        print "Reference std:", self.refstd
+        l, = self.ax.plot([0], self.refstd, color='black',marker='o',
+                          ls='', ms=10)
+#        PLT.setp(l,  'linewidth', 0.1)
         #PLT.setp(l,  'linewidth', 0.01)
         t = NP.linspace(0, NP.pi/2.0)
         r = NP.zeros_like(t) + self.refstd
         lines=self.ax.plot(t,r, color='darkgray',ls='--', label='_')
-        r = NP.zeros_like(t) + self.smin
-        lines=self.ax.plot(t,r, color='darkgray', label='_')
-        PLT.setp(lines,  'linewidth', 0.01)
+        for isec in cors:
+          rad=NP.arccos(isec)
+          stds=NP.linspace(self.smin,self.smax)
+          rad0=[rad for x in stds]
+          lines=self.ax.plot(rad0,stds, color='darkgray',ls='--')
+#        r = NP.zeros_like(t) + self.smin
+#        lines=self.ax.plot(t,r, color='r', label='_')
+#       PLT.setp(lines,  'linewidth', 0.07)
         #PLT.setp(lines,  'linewidth', 0.01)
 
         # Collect sample points for latter use (e.g. legend)
