@@ -665,9 +665,10 @@ plotres['PRAVG']['cleve2']=np.linspace(-5,5,21)
 plotres['PRAVG']['cleve3']=range(10)
 #  import colormaps as cmaps
 #  cmp=cmap=cmaps.viridis
-plotres['PRAVG']['cmp1']=plt.get_cmap('jet')
-#plotres['PRAVG']['cmp1']=cm.s3pcpn
+cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
+plotres['PRAVG']['cmp1']=cmp #plt.get_cmap('jet')
 plotres['PRAVG']['cmp2']='RdBu_r'
+plotres['PRAVG']['cmp3']=plt.get_cmap('Spectral_r') #cmp #plt.get_cmap('jet')
 plotres['PRAVG']['obs_name']="OBS_PRAVG_seasonal.nc"
 plotres['PRAVG']['obs_name_month']="OBS_PRAVG_monthly.nc"
 plotres['PRAVG']['obs_vname']="obs_mean"

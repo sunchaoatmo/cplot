@@ -18,7 +18,7 @@ def hovplot(data,vname):
 
   xlat=np.arange(data.start_lat,data.end_lat,data.dlat)
   clevel=plotres[vname]['cleve1']
-  cmp=plotres[vname]['cmp1']
+  cmp=plotres[vname]['cmp3']
   for case in data.cases:
     SUPTITLE="%s:%s-%s %s(%s)"%(sim_nicename[case],str(data.yb),str(data.ye),vname,plotres[vname]['unit'])
     fig = plt.figure(figsize=(10,8))
