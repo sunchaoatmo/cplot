@@ -4,7 +4,7 @@ from netCDF4 import date2num
 import numpy as np                                            
 import matplotlib.pyplot as plt
 import datetime                                               
-from plotset import plotres
+from plotset import plotres,sim_nicename
 from cstoolkit import tableau20 
 
 # Scale the RGB values to the [0, 1] range, which is the format matplotlib accepts.    
@@ -18,12 +18,15 @@ def hovplot(data,vname):
 
   xlat=np.arange(data.start_lat,data.end_lat,data.dlat)
   clevel=plotres[vname]['cleve1']
+  cmp=plotres[vname]['cmp1']
   for case in data.cases:
-    SUPTITLE="%s:%s-%s %s(%s)"%(case,str(data.yb),str(data.ye),vname,plotres[vname]['unit'])
+    SUPTITLE="%s:%s-%s %s(%s)"%(sim_nicename[case],str(data.yb),str(data.ye),vname,plotres[vname]['unit'])
     fig = plt.figure(figsize=(10,8))
     fig.suptitle(SUPTITLE, fontsize=12, fontweight='bold')
     ax = plt.subplot()
-    CS = plt.contourf(data.plotdata[case][vname],levels=clevel,cmap=plt.get_cmap('jet'))
+    import matplotlib.colors as mc
+    norm = mc.BoundaryNorm(clevel, 256)
+    CS = plt.contourf(data.plotdata[case][vname],levels=clevel,norm=norm,cmap=cmp,extend='max')
     fig.colorbar(CS)
     x_tickloc_major=[]
     labels_major   =[]
