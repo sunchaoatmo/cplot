@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import seaborn as sns
 import matplotlib.pyplot as plt
 from cstoolkit import tableau20 
 import matplotlib as mpl
@@ -10,6 +9,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from constant  import *
 from plotset import *
 def seasonaltaylor(data,vname):
+  import seaborn as sns
   cases=data.cases
   colors = plt.matplotlib.cm.Set1(np.linspace(0,1,len(cases)))
   
@@ -93,11 +93,11 @@ def combinedtaylor(data):
     rects[vname]=str(len(data.vnames))+'1'+str(ivname+1)
   
   fig = plt.figure(figsize=(8,15))
-  plt.style.use(['seaborn-white','seaborn-paper'])
+  plt.style.use(['seaborn-paper'])
   mpl.rcParams['grid.linewidth'] = 0.01
   mpl.rcParams['axes.linewidth'] = 0.6
   mpl.rcParams['font.size'] = 1
-  mpl.rcParams['font.sans-serif'] = "Narrow Arial"
+  mpl.rcParams['font.sans-serif'] = "Arial Narrow"
   mpl.rcParams['xtick.labelsize'] = "xx-large"
   zorder=1
   
@@ -137,16 +137,13 @@ def combinedtaylor(data):
         contours = dia[vname].add_contours(levels=5,  colors='0.5') # 5 levels
         dia[vname].ax.clabel(contours, inline=1, fontsize=5, fmt='%.1f')
         dia[vname]._ax.set_ylabel("Normalized STD",fontsize=12,  fontweight='bold')
-        #dia[vname]._ax.set_title(vname.upper(),loc='right',fontsize=12,  fontweight='bold')
-        if len(vname)>5:
-          plt.text(0.7, 0.05, vname,transform = dia[vname]._ax.transAxes,zorder=1000,fontsize=12)
-        else:
-          plt.text(0.8, 0.05, vname,transform = dia[vname]._ax.transAxes,zorder=1000,fontsize=12)
+        plt.text(0.85, 0.03, sim_nicename[vname],transform = dia[vname]._ax.transAxes,zorder=1000,fontsize=12)
     
   leg=dia[data.vnames[1]]._ax.legend( ph, [ p.get_label() for p in ph], 
-             frameon=True, mode="expand",fancybox=True, framealpha=1,numpoints=1, loc="upper right",bbox_to_anchor=(0.6, 0.95,0.45,0.2), ncol=3)
+             frameon=True, mode="expand",fancybox=True, framealpha=1,numpoints=1, 
+             loc="upper right",bbox_to_anchor=(0.6, 0.95,0.4,0.2), ncol=3)
   plt.setp(leg.texts, family="monospace")
              #frameon=True, mode=None,fancybox=True, framealpha=1,numpoints=1, loc="upper right",bbox_to_anchor=(1.25, 1.3), ncol=3)
-  leg.set_title("ERI CWRF RegCM4", prop = {'size':10})
+  leg.set_title("ERI   CWRF   RegCM4", prop = {'size':10})
 # plt.show()
   plt.savefig(vname+"_"+data.plotname+".pdf")

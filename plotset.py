@@ -4,6 +4,9 @@ import numpy as np# reshape
 from cstoolkit import drange
 sim_nicename={"ERI":"ERI",
              "RegCM":"RegCM4",
+             "PRAVG":"PR",
+             "SDII":"DI",
+             "RAINYDAYS":"RD",
              "run_RegCM4.6":"RegCM\n4.6",
              "run_RegCM4.5":"RegCM\n4.5",
              "ERI_run_0":"old CWRF",

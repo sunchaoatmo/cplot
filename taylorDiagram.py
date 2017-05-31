@@ -74,13 +74,11 @@ class TaylorDiagram(object):
         ax.axis["left"].set_axis_direction("right") # "X axis"
         ax.axis["left"].toggle(ticklabels=True, label=True)
         ax.axis["left"].toggle(ticklabels=False, label=False)
-        ticks_font=10
         ax.axis["left"].label.set_text("Normalized std.")
         ax.axis["left"].label.set_fontsize(9)
 
         ax.axis["right"].set_axis_direction("top")   # "Y axis"
         ax.axis["right"].toggle(ticklabels=True, label=True)
-#        ax.axis["right"].major_ticks.set_ticksize(ticks_font) # "Y axis"
         ax.axis["right"].major_ticklabels.set_axis_direction("left")
         ax.axis["right"].label.set_fontsize(9)
 
@@ -93,25 +91,16 @@ class TaylorDiagram(object):
         self.ax = ax.get_aux_axes(tr)   # Polar coordinates
 
         # Add reference point and stddev contour
-#        print "Reference std:", self.refstd
         l, = self.ax.plot([0], self.refstd, color='black',marker='o',
                           ls='', ms=10)
-#        PLT.setp(l,  'linewidth', 0.1)
-        #PLT.setp(l,  'linewidth', 0.01)
         t = NP.linspace(0, NP.pi/2.0)
         r = NP.zeros_like(t) + self.refstd
-        lines=self.ax.plot(t,r, color='darkgray',ls='--', label='_')
+        lines=self.ax.plot(t,r, color='darkgray',ls='--', label='_',zorder=0,lw=0.8)
         for isec in cors:
           rad=NP.arccos(isec)
           stds=NP.linspace(self.smin,self.smax)
           rad0=[rad for x in stds]
-          lines=self.ax.plot(rad0,stds, color='darkgray',ls='--')
-#        r = NP.zeros_like(t) + self.smin
-#        lines=self.ax.plot(t,r, color='r', label='_')
-#       PLT.setp(lines,  'linewidth', 0.07)
-        #PLT.setp(lines,  'linewidth', 0.01)
-
-        # Collect sample points for latter use (e.g. legend)
+          lines=self.ax.plot(rad0,stds, color='darkgray',ls='--',zorder=0,lw=0.8)
         self.samplePoints = [l]
 
     def add_sample(self, stddev, corrcoef, *args, **kwargs):
@@ -133,7 +122,7 @@ class TaylorDiagram(object):
         # Compute centered RMS difference
         rms = NP.sqrt(self.refstd**2 + rs**2 - 2*self.refstd*rs*NP.cos(ts))
         
-        contours = self.ax.contour(ts, rs, rms, levels,linewidths=0.1, **kwargs)
+        contours = self.ax.contour(ts, rs, rms, levels,linewidths=0.5,ls='--',zorder=0, **kwargs)
         #contours = self.ax.contour(ts, rs, rms, levels,linewidths=0.01, **kwargs)
 
         return contours
