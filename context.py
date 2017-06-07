@@ -15,7 +15,10 @@ class field(object):
     self.filename=defaultdict(dict)
     self.time    =defaultdict(dict)
     self.plotdata=defaultdict(dict)
-    self.plotname="%s_%s_%s_%s"%(plottype,self.yb,self.ye,method)
+    self.plotname="%s-%s-%s"%(self.yb,self.ye,method)
+    self.title   ={}
+    for vname in vnames:
+      self.title[vname]="%s %s %s-%s"%(vname,method,self.yb,self.ye)
     self.plottype=plottype
     self.shapefile=shapefile
     self.datapath=datapath

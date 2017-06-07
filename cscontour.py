@@ -62,12 +62,8 @@ def seasonalmap(data,vname):
   else:
     page=0
 
-  SUPTITLE="%s-%s %s(%s)"%(str(YB),str(YE),vname,plotres[vname]['unit'])
-  if data.method=="trend":
-    SUPTITLE="%s-%s %s trend %s/100year"%(str(data.yb),str(data.ye),vname,plotres[vname]['unit'])
-  else:
-    SUPTITLE="%s-%s %s(%s)"%(str(data.yb),str(data.ye),vname,plotres[vname]['unit'])
-  fig.suptitle(SUPTITLE, fontsize=12, fontweight='bold')
+  suptitle=data.title[vname]+plotres[vname]['unit']
+  fig.suptitle(suptitle, fontsize=12, fontweight='bold')
 
 ###################################### Plot Contour ########################################
   contour=cwrfplot(data.lat,data.lon,data.truelat1,data.truelat2,data.cen_lat,data.cen_lon,shapefile,extend)
@@ -104,7 +100,7 @@ def seasonalmap(data,vname):
         figurename=contourfilename+str(page)+"."+style.format
         page+=1
         fig.savefig(figurename,format=style.format,dpi=300) #,dpi=300)
-      fig.suptitle(SUPTITLE, fontsize=12, fontweight='bold')
+      fig.suptitle(suptitle, fontsize=12, fontweight='bold')
       figurenum=0
       #if case is not plotList[-1]:
       fig = plt.figure(figsize=figsizes[ncols])

@@ -29,8 +29,7 @@ def hovplot(data,vname):
   import math
   gs1 = gridspec.GridSpec(int(ncols),int(math.ceil(len(data.cases)/ncols)))
   fig = plt.figure(figsize=(12,8))
-  SUPTITLE="Hovmoller %s-%s %s(%s)"%(str(data.yb),str(data.ye),vname,plotres[vname]['unit'])
-  fig.suptitle(SUPTITLE, fontsize=12, fontweight='bold')
+  fig.suptitle(data.title[vname]+plotres[vname]['unit'], fontsize=12, fontweight='bold')
   #gs1.update(wspace=0., hspace=0.20)
   for icase,case in enumerate(data.cases):
     ax = plt.subplot(gs1[icase])
