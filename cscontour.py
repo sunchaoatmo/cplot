@@ -35,7 +35,7 @@ def seasonalmap(data,vname):
   fig = plt.figure(figsize=figsizes[ncols])
   contourfilename=plotname+"_"+vname
   extend="both"
-  suptitle=data.title[vname]+plotres[vname]['unit']
+  suptitle="%s (%s)"%(data.title[vname],plotres[vname]['unit'])
   if data.method=="cor":
     suptitle=data.title[vname]
     clevel=[-1,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,
@@ -45,7 +45,7 @@ def seasonalmap(data,vname):
     clevel=plotres[vname]['cleve3']
     cmp   =plt.get_cmap('YlOrRd') #plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
   elif data.method=="trend":
-    suptitle=data.title[vname]+plotres[vname]['unit']+"/100 years"
+    suptitle="%s (%s/100 years)"%(data.title[vname],plotres[vname]['unit'])
     if vname=="PRAVG":
       clevel=range(-10,11); [x*1 for x in range(-5,6)]
       clevel2=[x*1 for x in range(-10,11)]

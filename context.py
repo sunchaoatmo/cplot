@@ -33,7 +33,7 @@ class field(object):
 class reginalmetfield(field):
   def __init__(self,period,vnames,cases,nlevel,cutpoints,neof,
                method,plottype,shapefile,datapath,obsname,GCM_name,Time_control,
-               wrfinputfile,landmaskfile,masktype,maskval=0,regmapfile=None):
+               wrfinputfile,landmaskfile,masktype,maskval=1,regmapfile=None):
     from netCDF4 import Dataset
     import numpy as np
     import numpy.ma as ma
@@ -81,7 +81,6 @@ class seasonal_data(reginalmetfield):
     for case in self.cases:
       for vname in self.vnames:
         filename="%s/%s_%s_%s.nc"%(self.datapath,case,vname,self.period)
-        print(filename)
         try:
           fnc     =Dataset(filename,"r")
         except:
@@ -124,7 +123,6 @@ class seasonal_data(reginalmetfield):
           self.data[case][vname]=ma.masked_array((self.data[case][vname]), mask=mask_b)
           if "shift" in plotres[vname]:
             self.data[case][vname]=self.data[case][vname]+plotres[vname]['shift']
-          print("mean=%s,min=%s,max=%s"%(np.mean(self.data[case][vname]),np.min(self.data[case][vname]),np.max(self.data[case][vname])))
           print("Read in %s data %s:%s"%(case,self.period,vname))
         else:
           sys.exit('Sorry no such an option')
@@ -135,13 +133,11 @@ class seasonal_data(reginalmetfield):
     from constant import seasonname
     import cs_stat
     import sys
-    if self.method=="mean":
-      for case in self.cases:
-        for vname in self.vnames:
+    for case in self.cases:
+      for vname in self.vnames:
+        if self.method=="mean":
           self.plotdata[case][vname]=np.mean(self.data[case][vname],axis=0)
-    elif self.method=="cor" or self.method=="rmse":
-      for case in self.plotlist:
-        for vname in self.vnames:
+        elif self.method=="cor" or self.method=="rmse":
           self.plotdata[case][vname]= np.zeros((4,self.nlat,self.nlon))
           for k,name in enumerate(seasonname):
             self.plotdata[case][vname][k,:,:]= cs_stat.cs_stat.corrcoef_2d_mask(
@@ -150,9 +146,7 @@ class seasonal_data(reginalmetfield):
                                                self.mask,self.method   )
           _, mask_b = np.broadcast_arrays(self.plotdata[case][vname], self.mask[None,...])
           self.plotdata[case][vname]=ma.masked_array((self.plotdata[case][vname]), mask=mask_b)
-    elif self.method=="trend":
-      for case in self.plotlist:
-        for vname in self.vnames:
+        elif self.method=="trend":
           self.plotdata[case][vname]= np.zeros((4,self.nlat,self.nlon))
           for k,name in enumerate(seasonname):
             self.plotdata[case][vname][k,:,:]= cs_stat.cs_stat.fit_3d(
@@ -160,10 +154,8 @@ class seasonal_data(reginalmetfield):
                                                self.mask,self.maskval   )
           _, mask_b = np.broadcast_arrays(self.plotdata[case][vname], self.mask[None,...])
           self.plotdata[case][vname]=ma.masked_array((self.plotdata[case][vname]), mask=mask_b)
-    elif self.method=="eof":
-      from eofs.standard import Eof
-      for case in self.cases:
-        for vname in self.vnames:
+        elif self.method=="eof":
+          from eofs.standard import Eof
           self.plotdata[case][vname]=[]
           for k,name in enumerate(seasonname):
             if self.period=="seasonal":
@@ -172,8 +164,6 @@ class seasonal_data(reginalmetfield):
               temp   =month2season(self.data[case][vname],k)
             else:
               sys.exit('sorry no such a period')
-            print(case)
-            print(temp.shape)
             temp   =temp-temp.mean(axis=0)
             solver = Eof(temp)
             eofmap = solver.eofs(neofs=self.neof)
@@ -278,7 +268,6 @@ class daily_data(reginalmetfield):
 #       self.data[case][vname]=fnc.variables(vname)
         self.filename[case][vname]=filename
         self.time[case][vname]=fnc.variables["time"]
-#       print("Read in %s data %s:%s"%(case,self.period,vname))
 
   def Analysis(self):
     import numpy as np
