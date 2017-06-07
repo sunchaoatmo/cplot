@@ -35,16 +35,17 @@ def seasonalmap(data,vname):
   fig = plt.figure(figsize=figsizes[ncols])
   contourfilename=plotname+"_"+vname
   extend="both"
+  suptitle=data.title[vname]+plotres[vname]['unit']
   if data.method=="cor":
+    suptitle=data.title[vname]
     clevel=[-1,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,
             0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
-    #clevel=[-1,-0.95,-0.90,-0.85,-0.80,-0.75,-0.70,-0.65,-0.60,-0.55,-0.50,-0.45,-0.40,-0.35,-0.30,
-    #        0.30,0.35,0.40,0.45,0.50,0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.90,0.95,1]
     cmp   =plt.get_cmap('bwr') #plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
   elif data.method=="rmse":
     clevel=plotres[vname]['cleve3']
     cmp   =plt.get_cmap('YlOrRd') #plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
   elif data.method=="trend":
+    suptitle=data.title[vname]+plotres[vname]['unit']+"/100 years"
     if vname=="PRAVG":
       clevel=range(-10,11); [x*1 for x in range(-5,6)]
       clevel2=[x*1 for x in range(-10,11)]
@@ -62,7 +63,7 @@ def seasonalmap(data,vname):
   else:
     page=0
 
-  suptitle=data.title[vname]+plotres[vname]['unit']
+  
   fig.suptitle(suptitle, fontsize=12, fontweight='bold')
 
 ###################################### Plot Contour ########################################
