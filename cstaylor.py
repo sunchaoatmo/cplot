@@ -147,3 +147,22 @@ def combinedtaylor(data):
   leg.set_title("ERI   CWRF   RegCM4", prop = {'size':10})
 # plt.show()
   plt.savefig(vname+"_"+data.plotname+".pdf")
+
+def writedata(data,vname):
+  import pandas as pd
+  outputlist=[case for case in data.cases if case!=data.obsname]
+  outputlist_nicename=[sim_nicename[case] for case in data.cases if case!=data.obsname]
+  outputstd=np.zeros((len(outputlist),len(seasonname)))
+  outputcor=np.zeros((len(outputlist),len(seasonname)))
+  for icase,case in  enumerate(outputlist):
+    for iseason, season in enumerate(seasonname):
+      zorder=1
+      stddev, corrcoef=data.plotdata[case][vname][iseason]
+      outputstd[icase,iseason]=stddev
+      outputcor[icase,iseason]=corrcoef
+  dfstd = pd.DataFrame(outputstd, index=outputlist_nicename,columns=seasonname)
+  dfcor = pd.DataFrame(outputcor, index=outputlist_nicename,columns=seasonname)
+  writer = pd.ExcelWriter('Std-Cor_'+vname+'.xlsx')
+  dfstd.to_excel(writer,'std.')
+  dfcor.to_excel(writer,'cor.')
+  writer.save()

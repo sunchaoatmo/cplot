@@ -27,3 +27,4 @@ elif period=="daily":
 cwrfdata.Read()
 cwrfdata.Analysis()
 cwrfdata.Plot()
+cwrfdata.Output()

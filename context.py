@@ -24,6 +24,9 @@ class field(object):
       self.plotlist.remove(self.obsname)
     self.GCM_name =GCM_name
 
+  def Output(self):
+    pass
+
 class reginalmetfield(field):
   def __init__(self,period,vnames,cases,nlevel,cutpoints,neof,
                method,plottype,shapefile,datapath,obsname,GCM_name,Time_control,
