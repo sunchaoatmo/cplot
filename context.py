@@ -53,12 +53,10 @@ class reginalmetfield(field):
     self.nlat,self.nlon=self.lat.shape
     self.maskval=maskval
     self.masktype=masktype
-    if masktype==1:
-      self.mask= (np.logical_and(lm.variables["landmask"][cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]],
-                                              wrfinput.variables["LANDMASK"][0,cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]] ))
-    elif masktype==-1:
-      self.mask= np.logical_not((np.logical_and(lm.variables["landmask"][cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]],
-                                              wrfinput.variables["LANDMASK"][0,cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]] )))
+    self.mask= (np.logical_and(lm.variables["landmask"][cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]],
+                wrfinput.variables["LANDMASK"][0,cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]] ))
+    if masktype==-1:
+      self.mask= np.logical_not(self.mask)
     self.terrain =ma.masked_array(wrfinput.variables['HGT'][0,cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]],mask=self.mask)
     if regmapfile:
       regmapnc    =Dataset(regmapfile)
