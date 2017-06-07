@@ -16,7 +16,7 @@ def readini():
   period=config.get('PLOT','period')
   datapath=config.get('PLOT','datapath')
   nlevel=int(config.get('PLOT','nlevel'))
-  cutpoints=int(config.get('PLOT','cutpoints'))
+  cutpoints=[int(x) for x in config.get('PLOT','cutpoints').split(',')]
   neof    =int(config.get('PLOT','neof'))
   masktype=int(config.get('PLOT','masktype'))
   method=config.get('PLOT','method')
