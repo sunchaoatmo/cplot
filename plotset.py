@@ -604,7 +604,6 @@ plotres['TMIN']['biasplot']=True
 plotres['TMIN']['shift']=-273.15
 
 
-
 plotres['AT2M']['cleve1']=range(-10,31,2)
 plotres['AT2M']['cleve0']=range(-10,31,2) #np.linspace(-10,30,num=20) #range(1,11)
 plotres['AT2M']['cleve3']=range(10)
@@ -618,51 +617,3 @@ plotres['AT2M']['maskocean']=True
 plotres['AT2M']['valuemask']=True
 plotres['AT2M']['biasplot']=True
 plotres['AT2M']['shift']=-273.15
-
-########################## FINISH SET parameters#####################
-########################## constant value for US##############
-#REG_WIN  = [[ 20,  85,  36, 121]     
-REG_WIN  ={}
-REG_NAME = {}
-REG_WIN["US"]  = [
-           [ 16,  85,  36, 121]     
-       ,   [ 42,  89,  62, 117]  
-       ,   [ 51,  16,  70,  70]
-       ,   [139,  80, 166, 116]  
-       ,   [ 74,  55,  91,  90]  
-       ,   [104,  66, 133,  93]  
-       ,   [134,  28, 155,  69]  
-       ,   [ 94,  39, 128,  63]  
-       ]
-REG_NAME['US'] = [
-            "Cascade", 
-            "North Rockies", 
-            "NAM",
-            "Northeast", 
-            "Central Great Plain",  
-            "Midwest", 
-            "Southeast", 
-            "Coast States"
-            ] 
-REG_NAME['CN'] = [
-             "Xinjiang", "Northwest", "Sichuan", "Southwest", 
-            "Northeast", "North",    "Yangtze", "Southeast", 
-            "EastTibet", "WestTibet"] 
-REG_WIN["CN"]  = [
-           [ 22, 123,  81 , 141]  
-       ,   [ 90,  83, 115 , 106]  
-       ,   [ 90,  64,  115,  82]  
-       ,   [ 72,  37,  115,  60]  
-       ,   [145, 104,  168, 153]  
-       ,   [116,  85,  147, 103]  
-       ,   [116,  52,  157,  84]  
-       ,   [116,  20,  156,  51]   
-       ,   [ 55,  64,   89,  94]  
-       ,   [ 24,  64,   54,  94] 
-       ]
-
-from collections import OrderedDict
-DOMAIN_reg={}
-DOMAIN_reg['US'] = OrderedDict(zip(REG_NAME['US'], REG_WIN['US']))
-DOMAIN_reg['CN'] = OrderedDict(zip(REG_NAME['CN'], REG_WIN['CN']))
-#US_reg = dict(zip(REG_NAME, REG_WIN))
