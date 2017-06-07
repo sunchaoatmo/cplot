@@ -1,9 +1,34 @@
 #!/usr/bin/env python
 import matplotlib.pyplot as plt
+from mpl_toolkits.basemap import  cm
 import numpy as np# reshape
 from cstoolkit import drange
+from matplotlib.colors import LinearSegmentedColormap
+"""
+cmap_cs_precp = [ (242, 242, 242), (191, 239, 255), (178, 223, 238), 
+            (154, 192, 205), (  0, 235, 235), (  0, 163, 247), 
+            (153, 255, 51),(  0, 255,   0), (  0, 199,   0), (  0, 143,   0), 
+            (  0,  63,   0), (255, 255,   0),(255, 204, 0) ,   (255, 143,   0),
+            (255,   0,   0), (215,   0,   0), 
+            (255,   0, 255) ] #, (155,  87, 203)]
+"""
+cmap_cs_precp = [ (242, 242, 242),  (178, 223, 238),(154, 192, 205),(68, 176, 213),
+              (  0, 163, 247), (  0, 235, 235),
+            (153, 255, 51),(  0, 255,   0), (  0, 199,   0), (  0, 143,   0), 
+            (  0,  63,   0), (255, 255,   0),(255, 204, 0) ,   (255, 143,   0),
+            (255,   0,   0), (215,   0,   0), 
+            (255,   0, 255) ] #, (155,  87, 203)]
+
+
+def buildcmp(cmaplist):
+  for i in range(len(cmaplist)):    
+      r, g, b = cmaplist[i]    
+      cmaplist[i] = (r / 255., g / 255., b / 255.) 
+  return LinearSegmentedColormap.from_list( "precip", cmaplist,N=len(cmaplist))
+cmap_cs_precp=buildcmp(cmap_cs_precp)
+cmap_cs_precp.set_over('purple')
 sim_nicename={"ERI":"ERI",
-             "RegCM":"RegCM4",
+             "RegCM":"RegCM4.6",
              "PRAVG":"PR",
              "SDII":"DI",
              "RAINYDAYS":"RD",
@@ -659,19 +684,42 @@ plotres['PrMAX']['Taylor']=True
 plotres['PrMAX']['violion']=True
 
 
-
-#plotres['PRAVG']['cleve0']=range(0,11) #list(drange(0.2,8,0.2))  #np.linspace(1,10,num=20) #range(1,11)
-#plotres['PRAVG']['cleve1']=range(0,11)
-plotres['PRAVG']['cleve0']=range(0,18,2) #list(drange(0.2,8,0.2))  #np.linspace(1,10,num=20) #range(1,11)
-plotres['PRAVG']['cleve1']=range(0,18,2)
+nws_precip_colors = [
+    "#04e9e7",  # 0.01 - 0.10 inches
+    "#019ff4",  # 0.10 - 0.25 inches
+    "#0300f4",  # 0.25 - 0.50 inches
+    "#02fd02",  # 0.50 - 0.75 inches
+    "#01c501",  # 0.75 - 1.00 inches
+    "#008e00",  # 1.00 - 1.50 inches
+    "#fdf802",  # 1.50 - 2.00 inches
+    "#e5bc00",  # 2.00 - 2.50 inches
+    "#fd9500",  # 2.50 - 3.00 inches
+    "#fd0000",  # 3.00 - 4.00 inches
+    "#d40000",  # 4.00 - 5.00 inches
+    "#bc0000",  # 5.00 - 6.00 inches
+    "#f800fd",  # 6.00 - 8.00 inches
+    "#9854c6",  # 8.00 - 10.00 inches
+    "#653700",  # 8.00 - 10.00 inches
+    "#fdfdfd"   # 10.00+
+]
+"""
+cmap = [ (242, 242, 242), (191, 239, 255), (178, 223, 238), 
+            (154, 192, 205), (  0, 235, 235), (  0, 163, 247), 
+            (  0, 255,   0), (  0, 199,   0), (  0, 143,   0), 
+            (  0,  63,   0), (255, 255,   0), (255, 143,   0),
+            (255,   0,   0), (215,   0,   0), (191,   0,   0),
+            (255,   0, 255), (155,  87, 203), ( 92,  52, 176) ,]
+"""
+import matplotlib
+plotres['PRAVG']['cleve1']=[1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10,11,12,13,14,15,16,17,18]
+plotres['PRAVG']['cleve1']=range(1,19)
+plotres['PRAVG']['cleve1']=[0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5,6,7,8,9,10,11,12,13,14]
 plotres['PRAVG']['cleve2']=np.linspace(-5,5,21)
 plotres['PRAVG']['cleve3']=range(10)
-#  import colormaps as cmaps
-#  cmp=cmap=cmaps.viridis
-cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
-plotres['PRAVG']['cmp1']=cmp #plt.get_cmap('jet')
+plotres['PRAVG']['cmp1']=cmap_cs_precp
 plotres['PRAVG']['cmp2']='RdBu_r'
-plotres['PRAVG']['cmp3']=plt.get_cmap('Spectral_r') #cmp #plt.get_cmap('jet')
+cmp   =plt.get_cmap('Spectral_r');cmp.set_over('maroon');cmp.set_under('w')
+plotres['PRAVG']['cmp3']=cmp #plt.get_cmap('jet')
 plotres['PRAVG']['obs_name']="OBS_PRAVG_seasonal.nc"
 plotres['PRAVG']['obs_name_month']="OBS_PRAVG_monthly.nc"
 plotres['PRAVG']['obs_vname']="obs_mean"
@@ -715,8 +763,10 @@ plotres['R95T']['Taylor']=True
 
 plotres['PCT']['cleve0']=[0,2,4,6,8,10,15,20,25,30,40,50,60]
 plotres['PCT']['cleve1']=[0,2,4,6,8,10,15,20,25,30,40,50,60]
+plotres['PCT']['cleve1']=[2,4,6,8,10,12,14,16,18,20,25,30,35,40,45,50,55,60]
+plotres['PCT']['cleve1']=[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50]
 plotres['PCT']['cleve2']=np.linspace(-10,10,21)
-plotres['PCT']['cmp1']=plt.get_cmap('jet')
+plotres['PCT']['cmp1']=cmap_cs_precp
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('w')
 plotres['PCT']['cmp2']=cmp
 plotres['PCT']['obs_name']="pr_obs_ana.nc"
@@ -733,10 +783,10 @@ plotres['PCT']['biasplot']=False
 plotres['PCT']['ETS']=True
 plotres['PCT']['Taylor']=True
 
-plotres['CDD']['cleve0']=range(5,40,5)
-plotres['CDD']['cleve1']=range(5,40,5)
+plotres['CDD']['cleve0']=range(2,40,2)
+plotres['CDD']['cleve1']=[4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50]
 plotres['CDD']['cleve2']=None
-plotres['CDD']['cmp1']=plt.get_cmap('jet')
+plotres['CDD']['cmp1']=cmap_cs_precp
 plotres['CDD']['cmp2']=None
 plotres['CDD']['obs_name']="Pr_obs_ana.nc"
 plotres['CDD']['obs_vname']="obs_cdd"
@@ -751,11 +801,10 @@ plotres['CDD']['biasplot']=False
 plotres['CDD']['ETS']=True
 plotres['CDD']['Taylor']=True
 
-plotres['SDII']['cleve0']=range(0,15)
-plotres['SDII']['cleve1']=range(20)
+plotres['SDII']['cleve0']=range(1,15)
+plotres['SDII']['cleve1']=range(1,20)
 plotres['SDII']['cleve2']=None
-#plotres['SDII']['cmp1']=plt.get_cmap('YlGnBu')
-plotres['SDII']['cmp1']=plt.get_cmap('jet')
+plotres['SDII']['cmp1']=cmap_cs_precp
 plotres['SDII']['cmp2']=None
 plotres['SDII']['sim_name']="SDII"  #seasonal.bin.SDII"
 plotres['SDII']['sim_vname']="SDII"  #seasonal.bin.SDII"
@@ -766,10 +815,10 @@ plotres['SDII']['biasplot']=False
 plotres['SDII']['ETS']=True
 plotres['SDII']['Taylor']=True
 
-plotres['R5D']['cleve0']=range(0,2,30)
-plotres['R5D']['cleve1']=range(35)
+plotres['R5D']['cleve0']=[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50]
+plotres['R5D']['cleve1']=[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50]
 plotres['R5D']['cleve2']=None
-plotres['R5D']['cmp1']=plt.get_cmap('jet')
+plotres['R5D']['cmp1']=cmap_cs_precp
 plotres['R5D']['cmp2']=None
 plotres['R5D']['sim_name']="R5D"  #seasonal.bin.R5D"
 plotres['R5D']['sim_vname']="R5D"  #seasonal.bin.R5D"
@@ -780,10 +829,10 @@ plotres['R5D']['biasplot']=False
 plotres['R5D']['ETS']=True
 plotres['R5D']['Taylor']=True
 
-plotres['R10']['cleve0']=range(0,20)
-plotres['R10']['cleve1']=range(30)
+plotres['R10']['cleve0']=[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50]
+plotres['R10']['cleve1']=[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50]
 plotres['R10']['cleve2']=None
-plotres['R10']['cmp1']=plt.get_cmap('jet')
+plotres['R10']['cmp1']=cmap_cs_precp
 #plotres['R10']['cmp1']=plt.get_cmap('YlGnBu')
 plotres['R10']['cmp2']=None
 plotres['R10']['sim_name']="R10"  #seasonal.bin.R10"
@@ -795,10 +844,11 @@ plotres['R10']['biasplot']=False
 plotres['R10']['ETS']=True
 plotres['R10']['Taylor']=True
 
-plotres['RAINYDAYS']['cleve0']=range(0,70,5)
-plotres['RAINYDAYS']['cleve1']=range(0,70,5)
+plotres['RAINYDAYS']['cleve0']=range(5,95,5)
+plotres['RAINYDAYS']['cleve1']=range(5,95,5)
 plotres['RAINYDAYS']['cleve2']=None
-plotres['RAINYDAYS']['cmp1']=plt.get_cmap('jet');cmp.set_over('maroon');cmp.set_under('w')
+#plotres['RAINYDAYS']['cmp1']=plt.get_cmap('jet');cmp.set_over('maroon');cmp.set_under('w')
+plotres['RAINYDAYS']['cmp1']=cmap_cs_precp
 plotres['RAINYDAYS']['cmp2']=None
 plotres['RAINYDAYS']['sim_name']="RAINYDAYS"  #seasonal.bin.RAINYDAYS"
 plotres['RAINYDAYS']['sim_vname']="RAINYDAYS"  #seasonal.bin.RAINYDAYS"
