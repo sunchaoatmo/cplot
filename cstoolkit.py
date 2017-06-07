@@ -64,13 +64,14 @@ def vovercmap(data,clat,clon,fgeo,ax,firsttime,x,y,ylabels,cleve,cmp,m,k,u,v):
       ax.set_ylabel(ylabels, fontsize=6)
     return (firsttime,x,y,cs,m,Q);
 class cwrfplot:
-  def __init__(self,clat,clon,TRUELAT1,TRUELAT2,CEN_LAT,CEN_LON,shapefilepaths=None):
+  def __init__(self,clat,clon,TRUELAT1,TRUELAT2,CEN_LAT,CEN_LON,shapefilepaths=None,extend="max"):
     self.m = Basemap( resolution='l',area_thresh=1000.,projection='lcc',
           llcrnrlat=clat[0][0],urcrnrlat=clat[-1][-1],
           llcrnrlon=clon[0][0],urcrnrlon=clon[-1][-1],
           lat_1=TRUELAT1,lat_2=TRUELAT2,
           lat_0=CEN_LAT ,lon_0=CEN_LON)
     self.x, self.y = self.m(clon, clat)
+    self.extend=extend
     self.segs={}
     if shapefilepaths:
       for shapefilepath in shapefilepaths:
@@ -96,7 +97,7 @@ class cwrfplot:
           segs[irecord].append(lonlat[index2:])
     return segs
 
-  def contourmap(self,data,ax,cleve,cmp, ylabels=None,sidenamefontsize=10  ):
+  def contourmap(self,data,ax,cleve,cmp, ylabels=None,sidenamefontsize=10 ,terrain=None ,text=None,):
     # setup lambert conformal basemap.
     # lat_1 is first standard parallel.
     # lat_2 is second standard parallel (defaults to lat_1).
@@ -108,18 +109,34 @@ class cwrfplot:
       from matplotlib.collections import LineCollection
       for seg in segs:
         lines = LineCollection(seg,antialiaseds=(1,))
-        lines.set_edgecolors('gray')
+        lines.set_edgecolors('k')
         lines.set_linewidth(0.08)
         ax.add_collection(lines)
-    self.m.drawcoastlines(linewidth=0.08,  color='gray', antialiased=1, ax=None, zorder=None)
-    self.m.drawstates(linewidth=0.08,  color='gray') 
+    self.m.drawcoastlines(linewidth=0.08,  color='k', antialiased=1, ax=None, zorder=None)
+    self.m.drawstates(linewidth=0.08,  color='k') 
     import matplotlib.colors as mc
-    norm = mc.BoundaryNorm(cleve, 256)
-    cs = self.m.contourf(self.x,self.y,data,cleve,cmap=cmp,norm=norm,extend='both')
+#   norm = mc.BoundaryNorm(cleve, 256)
+    norm = mc.BoundaryNorm(cleve, cmp.N)
+    #norm = mc.BoundaryNorm(cleve, len(cleve))
+    #cs = self.m.contourf(self.x,self.y,data,cmap=cmp ,norm=norm,extend='max') #,extend='both')
+    cs = self.m.contourf(self.x,self.y,data,cleve[:-1],cmap=cmp ,norm=norm,extend=self.extend) #,extend='both')
+    if text is not None:
+      ax.text(0.5, 0.8, text,
+           verticalalignment='bottom', horizontalalignment='center',
+           transform=ax.transAxes,
+           fontsize=sidenamefontsize, fontweight='bold')
+    if terrain is not None:
+      import matplotlib.cm as cm
+      level_h=range(0,2000,200)
+      ct = self.m.contour(self.x,self.y,terrain,level_h,linewidths=0.05,extend='max',colors= 'k' ) #,extend='both')
     for axis in ['top','bottom','left','right']:
       ax.spines[axis].set_linewidth(0.01)
     if ylabels:
-      ax.set_ylabel(ylabels, fontsize=sidenamefontsize, fontweight='bold')
+      ax.text(0.02, 0.05, ylabels,
+           verticalalignment='bottom', horizontalalignment='left',
+           transform=ax.transAxes,
+           fontsize=sidenamefontsize, fontweight='bold')
+#      ax.set_ylabel(ylabels, fontsize=sidenamefontsize, fontweight='bold')
     [i.set_linewidth(0.1) for i in ax.spines.itervalues()]
     return (cs);
 

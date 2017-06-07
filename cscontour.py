@@ -15,10 +15,12 @@ from plotset import *
 from cstoolkit import *
 from constant  import *
 
-Style = namedtuple('Style', ['name', 'sidenamefs','tickfs','format','Figsize'])
+Style = namedtuple('Style', ['name', 'sidenamefs','tickfs','format'])
 nicev={"T2M":"T2M","CLDFRA":"CLT","CLDFRAl":"CLL","CLDFRAm":"CLM","CLDFRAh":"CLH","ASWDNS":"SWd","TCWPC":"TCWPC","Pr":"Pr","ALWDNS":"LWd","ALWUPS":"LWu","TMAX":"T2MAX","TMIN":"T2MIN","PRAVG":"Pr","PCT":"PCT","RAINYDAYS":"RAINYDAYS","CDD":"CDD","AT2M":"AT2M"}
-style = Style(name="Paper",sidenamefs=6,tickfs=6,format="pdf",Figsize=(4.1,2.4))
-style = Style(name="PPT",sidenamefs=3,tickfs=6,format="png",Figsize=(4.0,2.9))
+#style = Style(name="PPT",sidenamefs=3,tickfs=5,format="png",Figsize=(2.73,2.9))
+style = Style(name="PPT",sidenamefs=8,tickfs=7,format="pdf")
+figsizes={4:(8.5,9.0),3:(8.5,5.4)}
+axes_bar={4:[0.15, 0.18, 0.7, 0.1],3:[0.15, 0.03, 0.7, 0.1]}
 
 def seasonalmap(data,vname):
   plotList =data.plotlist
@@ -27,14 +29,17 @@ def seasonalmap(data,vname):
   plotname =data.plotname
   landmask =data.mask
   shapefile=data.shapefile
-  ncols=5  #len(plotList)+1
+  ncols=len(plotList) if len(plotList)<5 else 5
   gs1 = gridspec.GridSpec(ncols,len(seasonname) )
-  gs1.update(wspace=0., hspace=0.20)
-  fig = plt.figure(figsize=style.Figsize)
+  gs1.update(wspace=0., hspace=0.0)
+  fig = plt.figure(figsize=figsizes[ncols])
   contourfilename=plotname+"_"+vname
+  extend="both"
   if data.method=="cor":
-    clevel=[-1,-0.95,-0.90,-0.85,-0.80,-0.75,-0.70,-0.65,-0.60,-0.55,-0.50,-0.45,-0.40,-0.35,-0.30,
-            0.30,0.35,0.40,0.45,0.50,0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.90,0.95,1]
+    clevel=[-1,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,
+            0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+    #clevel=[-1,-0.95,-0.90,-0.85,-0.80,-0.75,-0.70,-0.65,-0.60,-0.55,-0.50,-0.45,-0.40,-0.35,-0.30,
+    #        0.30,0.35,0.40,0.45,0.50,0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.90,0.95,1]
     cmp   =plt.get_cmap('bwr') #plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
   elif data.method=="rmse":
     clevel=plotres[vname]['cleve3']
@@ -49,6 +54,7 @@ def seasonalmap(data,vname):
     clevel.remove(0)
     cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
   else:
+    extend="max"
     clevel=plotres[vname]['cleve1']
     cmp=plotres[vname]['cmp1']
   if style.format=="pdf":
@@ -64,7 +70,7 @@ def seasonalmap(data,vname):
   fig.suptitle(SUPTITLE, fontsize=12, fontweight='bold')
 
 ###################################### Plot Contour ########################################
-  contour=cwrfplot(data.lat,data.lon,data.truelat1,data.truelat2,data.cen_lat,data.cen_lon,shapefile)
+  contour=cwrfplot(data.lat,data.lon,data.truelat1,data.truelat2,data.cen_lat,data.cen_lon,shapefile,extend)
   figurenum=0
   for casenumber,case in enumerate(plotList):
     for k,name in enumerate(seasonname):
@@ -77,29 +83,30 @@ def seasonalmap(data,vname):
         sidename=None
       ax1 = plt.subplot(gs1[figurenum])
       figurenum+=1
-      cs=contour.contourmap(data.plotdata[case][vname][k,:,:],ax1,clevel,cmp, ylabels=sidename,sidenamefontsize=style.sidenamefs  )
+      text=name if casenumber==0 else None
+      cs=contour.contourmap(data.plotdata[case][vname][k,:,:],ax1,clevel,cmp, ylabels=sidename,sidenamefontsize=style.sidenamefs,
+                           text=text)
       ax1.set_xticks([])
       ax1.set_yticks([])
     
     if figurenum%(len(seasonname)*ncols)==0 or case==plotList[-1]:
-      print("one page print for org")
-      if ncols==4:
-        ax2 = fig.add_axes([0.15, 0.03, 0.7, 0.1],aspect=0.02)
-      elif ncols==3:
-        ax2 = fig.add_axes([0.15, 0.03, 0.7, 0.1],aspect=0.02)
-      else:
-        ax2 = fig.add_axes([0.15, 0.01, 0.7, 0.1],aspect=0.02)
+      print("ncols=%s one page print for org"%(ncols))
+      ax2 = fig.add_axes(axes_bar[ncols],aspect=0.02)
+
       cbar=fig.colorbar(cs, cax=ax2,orientation="horizontal",drawedges=False)
       cbar.outline.set_visible(False)
       cbar.ax.tick_params(labelsize=style.tickfs,length=0)
       cbar.set_ticks(clevel)
-      plt.xticks(rotation=90)
+      cbar.set_ticklabels(clevel)
       if style.format=="pdf":
         pp.savefig()
       else:
         figurename=contourfilename+str(page)+"."+style.format
         page+=1
-        fig.savefig(figurename,format=style.format,dpi=1000) #,dpi=300)
-      fig = plt.figure(figsize=style.Figsize)
+        fig.savefig(figurename,format=style.format,dpi=300) #,dpi=300)
       fig.suptitle(SUPTITLE, fontsize=12, fontweight='bold')
       figurenum=0
+      #if case is not plotList[-1]:
+      fig = plt.figure(figsize=figsizes[ncols])
+  if style.format=="pdf":
+    pp.close()
