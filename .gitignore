@@ -99,3 +99,9 @@ ENV/
 
 # mypy
 .mypy_cache/
+#plot results
+*.png
+*.pdf
+
+#python pickle data
+*.p
