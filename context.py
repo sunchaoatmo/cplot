@@ -48,8 +48,8 @@ class reginalmetfield(field):
     self.cen_lat=wrfinput.CEN_LAT
     self.cen_lon=wrfinput.CEN_LON
     self.cutpoints=cutpoints
-    self.lat=wrfinput.variables['CLAT'][0,cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]]
-    self.lon=wrfinput.variables['CLONG'][0,cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]]
+    for key,keyname in {"lat":'CLAT',"lon":'CLONG'}.iteritems():
+       setattr(self,key,wrfinput.variables[keyname][0,cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]])
     self.nlat,self.nlon=self.lat.shape
     self.maskval=maskval
     self.masktype=masktype
