@@ -5,8 +5,7 @@ from netCDF4 import date2num
 import numpy as np                                            
 import matplotlib.pyplot as plt
 import datetime                                               
-from plotset import plotres,sim_nicename
-from cstoolkit import tableau20 
+from plotset import plotres,sim_nicename,tableau20
 from collections import namedtuple
 Style = namedtuple('Style', ['name', 'sidenamefs','tickfs','format','Figsize'])
 style = Style(name="PPT",sidenamefs=3,tickfs=6,format="png",Figsize=(4.0,2.9))

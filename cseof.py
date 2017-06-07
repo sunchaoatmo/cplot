@@ -5,7 +5,6 @@ import matplotlib.gridspec as gridspec
 import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 import seaborn as sns
-from cstoolkit import tableau20 
 from constant  import *
 from collections import namedtuple
 from cstoolkit import cwrfplot

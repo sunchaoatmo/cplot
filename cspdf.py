@@ -2,9 +2,8 @@
 import matplotlib.pyplot as plt
 import numpy as np# reshape
 import cs_stat
-from plotset import sim_nicename,plotres
+from plotset import sim_nicename,plotres,tableau20
 from constant  import *
-from cstoolkit import tableau20
 
 import cs_stat  #.cs_stat.fit_3d
 import numpy.ma as ma

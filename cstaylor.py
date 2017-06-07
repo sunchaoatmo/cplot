@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import matplotlib.pyplot as plt
-from cstoolkit import tableau20 
 import matplotlib as mpl
 import taylorDiagram as td
 import numpy as np
