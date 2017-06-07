@@ -30,6 +30,7 @@ class reginalmetfield(field):
                wrfinputfile,landmaskfile,masktype,maskval=0,regmapfile=None):
     from netCDF4 import Dataset
     import numpy as np
+    import numpy.ma as ma
 
     field.__init__(self,period,vnames,cases,nlevel,neof,
                method,plottype,shapefile,datapath,obsname,GCM_name,Time_control)
@@ -41,20 +42,21 @@ class reginalmetfield(field):
     self.cen_lat=wrfinput.CEN_LAT
     self.cen_lon=wrfinput.CEN_LON
     self.cutpoints=cutpoints
-    self.lat=wrfinput.variables['CLAT'][0,cutpoints:-cutpoints,cutpoints:-cutpoints]
-    self.lon=wrfinput.variables['CLONG'][0,cutpoints:-cutpoints,cutpoints:-cutpoints]
+    self.lat=wrfinput.variables['CLAT'][0,cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]]
+    self.lon=wrfinput.variables['CLONG'][0,cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]]
     self.nlat,self.nlon=self.lat.shape
     self.maskval=maskval
     self.masktype=masktype
     if masktype==1:
-      self.mask= (np.logical_and(lm.variables["landmask"][cutpoints:-cutpoints,cutpoints:-cutpoints],
-                                              wrfinput.variables["LANDMASK"][0,cutpoints:-cutpoints,cutpoints:-cutpoints] ))
+      self.mask= (np.logical_and(lm.variables["landmask"][cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]],
+                                              wrfinput.variables["LANDMASK"][0,cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]] ))
     elif masktype==-1:
-      self.mask= np.logical_not((np.logical_and(lm.variables["landmask"][cutpoints:-cutpoints,cutpoints:-cutpoints],
-                                              wrfinput.variables["LANDMASK"][0,cutpoints:-cutpoints,cutpoints:-cutpoints] )))
+      self.mask= np.logical_not((np.logical_and(lm.variables["landmask"][cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]],
+                                              wrfinput.variables["LANDMASK"][0,cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]] )))
+    self.terrain =ma.masked_array(wrfinput.variables['HGT'][0,cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]],mask=self.mask)
     if regmapfile:
       regmapnc    =Dataset(regmapfile)
-      self.regmap =regmapnc.variables['reg_mask'][cutpoints:-cutpoints,cutpoints:-cutpoints]
+      self.regmap =regmapnc.variables['reg_mask'][cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]]
       self.regnames=regmapnc.variables['regname']
       self.nregs  =np.max(self.regmap)
 
@@ -68,6 +70,7 @@ class seasonal_data(reginalmetfield):
 
   def Read(self):
     from netCDF4 import Dataset,num2date
+    from plotset import plotres
     import numpy as np
     import numpy.ma as ma
     import sys
@@ -85,9 +88,9 @@ class seasonal_data(reginalmetfield):
           YB=int(fnc.variables["time"][ 0])
           dimsize=fnc.variables[vname].shape
           if len(dimsize)==5:
-            self.data[case][vname]=fnc.variables[vname][self.yb-YB:self.ye-YB,:,self.nlevel,self.cutpoints:-self.cutpoints,self.cutpoints:-self.cutpoints]
+            self.data[case][vname]=fnc.variables[vname][self.yb-YB:self.ye-YB,:,self.nlevel,self.cutpoints[0]:-self.cutpoints[1],self.cutpoints[2]:-self.cutpoints[3]]
           elif len(dimsize)==4:
-            self.data[case][vname]=fnc.variables[vname][self.yb-YB:self.ye-YB,:,self.cutpoints:-self.cutpoints,self.cutpoints:-self.cutpoints]
+            self.data[case][vname]=fnc.variables[vname][self.yb-YB:self.ye-YB,:,self.cutpoints[0]:-self.cutpoints[1],self.cutpoints[2]:-self.cutpoints[3]]
           elif len(dimsize)==3:
             from datetime import datetime
             from netCDF4 import date2num
@@ -110,11 +113,14 @@ class seasonal_data(reginalmetfield):
                 date_cur=datetime(year_cur,month,1,0,0,0)
                 time_cur=date2num(date_cur,units,calendar=calendar)
                 itime   =np.where(times==time_cur)[0]
-                self.data[case][vname][iyear,iseason,:,:]=convert*fnc.variables[vname][itime,self.cutpoints:-self.cutpoints,self.cutpoints:-self.cutpoints]
+                self.data[case][vname][iyear,iseason,:,:]=convert*fnc.variables[vname][itime,self.cutpoints[0]:-self.cutpoints[1],self.cutpoints[2]:-self.cutpoints[3]]
           else:
             sys.exit("dimen size incorrect")
           _, mask_b = np.broadcast_arrays(self.data[case][vname], self.mask[None,...])
           self.data[case][vname]=ma.masked_array((self.data[case][vname]), mask=mask_b)
+          if "shift" in plotres[vname]:
+            self.data[case][vname]=self.data[case][vname]+plotres[vname]['shift']
+          print("mean=%s,min=%s,max=%s"%(np.mean(self.data[case][vname]),np.min(self.data[case][vname]),np.max(self.data[case][vname])))
           print("Read in %s data %s:%s"%(case,self.period,vname))
         else:
           sys.exit('Sorry no such an option')
@@ -229,6 +235,12 @@ class seasonal_data(reginalmetfield):
           data_o[index,:,:]=data_i[year,begmonth(k)+i,:,:] 
           index+=1
     return data_o
+
+  def Output(self):
+    if self.plottype=="CTaylor": 
+      from cstaylor import writedata
+      for vname in self.vnames:
+        writedata(self,vname)
 
 class daily_data(reginalmetfield):
   def __init__(self,period,vnames,cases,nlevel,cutpoints,neof,
