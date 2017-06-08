@@ -20,7 +20,9 @@ nicev={"T2M":"T2M","CLDFRA":"CLT","CLDFRAl":"CLL","CLDFRAm":"CLM","CLDFRAh":"CLH
 #style = Style(name="PPT",sidenamefs=3,tickfs=5,format="png",Figsize=(2.73,2.9))
 style = Style(name="PPT",sidenamefs=8,tickfs=7,format="pdf")
 figsizes={4:(8.5,9.0),3:(8.5,5.4)}
+figsizes={5:(8.5,8.4),4:(8.25,7.0),3:(8.5,5.4)}
 axes_bar={4:[0.15, 0.18, 0.7, 0.1],3:[0.15, 0.03, 0.7, 0.1]}
+axes_bar={5:[0.15, 0.04, 0.7, 0.1],4:[0.15, 0.03, 0.7, 0.1],3:[0.15, 0.03, 0.7, 0.1]}
 
 def seasonalmap(data,vname):
   plotList =data.plotlist
@@ -46,24 +48,27 @@ def seasonalmap(data,vname):
     cmp   =plt.get_cmap('YlOrRd') #plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
   elif data.method=="trend":
     suptitle="%s (%s/100 years)"%(data.title[vname],plotres[vname]['unit'])
-    if vname=="PRAVG":
-      clevel=range(-10,11); [x*1 for x in range(-5,6)]
-      clevel2=[x*1 for x in range(-10,11)]
-    else:
-      clevel=range(-20,22,2);
-      clevel2=[x*2 for x in range(-10,11)]
+    #clevel=plotres[vname]['cleve0']
+    cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('midnightblue')
+    clevel=range(-20,22,2);
+    clevel2=[x*2 for x in range(-10,11)]
     clevel.remove(0)
-    cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
   else:
     extend="max"
     clevel=plotres[vname]['cleve1']
     cmp=plotres[vname]['cmp1']
+  if data.plottype=="diff":
+    extend="both"
+    suptitle="%s bias ( %s)"%(data.title[vname],plotres[vname]['unit'])
+    clevel=plotres[vname]['cleve0']
+    cmp=plotres[vname]['cmp2']
   if style.format=="pdf":
     pp = PdfPages(contourfilename+'.pdf')
   else:
     page=0
 
   
+  print(clevel)
   fig.suptitle(suptitle, fontsize=12, fontweight='bold')
 
 ###################################### Plot Contour ########################################

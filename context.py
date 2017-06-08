@@ -18,12 +18,12 @@ class field(object):
     self.plotname="%s-%s-%s"%(self.yb,self.ye,method)
     self.title   ={}
     for vname in vnames:
-      self.title[vname]="%s %s %s-%s"%(vname,method,self.yb,self.ye)
+      self.title[vname]="%s %s %s-%s"%(vname,method if method!="mean" else "",self.yb,self.ye)
     self.plottype=plottype
     self.shapefile=shapefile
     self.datapath=datapath
     self.obsname =obsname
-    if method=="cor":
+    if method=="cor" or plottype=="diff":
       self.plotlist.remove(self.obsname)
     self.GCM_name =GCM_name
 
@@ -191,10 +191,14 @@ class seasonal_data(reginalmetfield):
                 cor=coef[0,1]
               tempoutput.append((std_sim,cor))
             self.plotdata[case][vname]=tempoutput
+    if self.plottype=="diff":
+      for case in self.plotlist:
+        for vname in self.vnames:
+          self.plotdata[case][vname]=self.plotdata[case][vname]-self.plotdata[self.obsname][vname]
 
 
   def Plot(self):
-    if self.plottype=="contour": 
+    if self.plottype=="contour" or self.plottype=="diff": 
       if self.method=="eof":
         from cseof import eofplot
         for vname in self.vnames:
