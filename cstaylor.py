@@ -130,13 +130,12 @@ def combinedtaylor(data):
                        marker=marker, markersize=ms, ls='',
                        mfc=color1, mec=color1, # Colors
                          label=labelname,zorder=zorder))
-#                        label="%s in %s"%(sim_nicename[case],season),zorder=zorder)
 
     
         contours = dia[vname].add_contours(levels=5,  colors='0.5') # 5 levels
         dia[vname].ax.clabel(contours, inline=1, fontsize=5, fmt='%.1f')
         dia[vname]._ax.set_ylabel("Normalized STD",fontsize=12,  fontweight='bold')
-        plt.text(0.85, 0.03, sim_nicename[vname],transform = dia[vname]._ax.transAxes,zorder=1000,fontsize=12)
+        plt.text(0.85, 0.03, sim_nicename.get(vname,vname),transform = dia[vname]._ax.transAxes,zorder=1000,fontsize=12)
     
   leg=dia[data.vnames[1]]._ax.legend( ph, [ p.get_label() for p in ph], 
              frameon=True, mode="expand",fancybox=True, framealpha=1,numpoints=1, 
