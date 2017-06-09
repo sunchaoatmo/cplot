@@ -44,7 +44,6 @@ class reginalmetfield(field):
 
     wrfinput    =Dataset(wrfinputfile)
     lm          =Dataset(landmaskfile)
-    print(regmapfile)
     if regmapfile:
       regmapnc    =Dataset(regmapfile)
       process_dict ={"mask":"LANDMASK","lat":'CLAT',"lon":'CLONG',"terrain":"HGT","regmap":"reg_mask"}
@@ -149,8 +148,8 @@ class seasonal_data(reginalmetfield):
                                                mask=self.mask,
                                                methodname=self.method ,
                                                maskval=self.maskval  )
-          _, mask_b = np.broadcast_arrays(self.plotdata[case][vname], self.mask[None,...])
-          self.plotdata[case][vname]=ma.masked_array((self.plotdata[case][vname]), mask=mask_b)
+#         _, mask_b = np.broadcast_arrays(self.plotdata[case][vname], self.mask[None,...])
+#         self.plotdata[case][vname]=ma.masked_array((self.plotdata[case][vname]), mask=mask_b)
         elif self.method=="eof":
           from eofs.standard import Eof
           self.plotdata[case][vname]=[]
