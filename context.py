@@ -125,8 +125,8 @@ class seasonal_data(reginalmetfield):
               self.data[case][vname][iyear,iseason,:,:]=convert*fnc.variables[vname][itime,self.cutpoints[0]:-self.cutpoints[1],self.cutpoints[2]:-self.cutpoints[3]]
         else:
           sys.exit("dimen size incorrect")
-        _, mask_b = np.broadcast_arrays(self.data[case][vname], self.mask[None,...])
-        self.data[case][vname]=ma.masked_array((self.data[case][vname]), mask=mask_b)
+#       _, mask_b = np.broadcast_arrays(self.data[case][vname], self.mask[None,...])
+#       self.data[case][vname]=ma.masked_array((self.data[case][vname]), mask=mask_b)
         if "shift" in plotres[vname]:
           self.data[case][vname]=self.data[case][vname]+plotres[vname]['shift']
         print("Read in %s data %s:%s"%(case,self.period,vname))
@@ -230,11 +230,9 @@ class daily_data(reginalmetfield):
     reginalmetfield.__init__(self,period,vnames,cases,nlevel,cutpoints,neof,
                method,plottype,shapefile,datapath,obsname,GCM_name,Time_control,
                wrfinputfile,landmaskfile,masktype,regmapfile=regmapfile)
-    for key in Hovmoller:
-       setattr(self,key,Hovmoller[key])
 
-    for key in PDF:
-       setattr(self,key,PDF[key])
+    for key,item in PDF.update(Hovmoller).iteritems():
+       setattr(self,key,item)
 
     if self.method=="cor":
       self.x_min=-1.0
