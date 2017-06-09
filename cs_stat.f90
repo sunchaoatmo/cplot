@@ -815,8 +815,7 @@ end subroutine
           call fit(x, y_3d(:,i,j),nt,sig,mwt,a,b,siga,sigb,chi2,q)
           call lsqtest(x,y_3d(:,i,j),a,b,nt,q)
           trend(i,j)=b*100 !/sum(y_3d(:,i,j))*nt*100
-!          trend(i,j)=b/sum(y_3d(:,i,j))*nt*100
-          if (q<5) then
+          if (q<0.05) then
            trend(i,j)=b*100 !/sum(y_3d(:,i,j))*nt*100
           else
            trend(i,j)=0 !-99999
@@ -886,32 +885,75 @@ end subroutine
     end do
   end subroutine mean_2d
 
-  subroutine corrcoef_2d_mask(obs,sim,mask,methodname,nt,nx,ny,output)
+  subroutine ananual_ana(obs,sim,mask,methodname,maskval,nt,nx,ny,output)
     integer,intent(in)               ::nt,nx,ny
-    real,intent(in),dimension(nt,nx,ny)::obs,sim
+    real,intent(in),dimension(nt,nx,ny)::obs
+    real,intent(in),dimension(nt,nx,ny)::sim
     real,intent(in),dimension(nx,ny)::mask
-    character (3),intent(in)   ::methodname
+    character (5),intent(in)   ::methodname
     real,intent(out),dimension(nx,ny)::output
+    real,intent(in)                 ::maskval
     !local 
-    integer :: i,j,k
-    if (methodname=="cor") then
+    real,dimension(nt)::x,sig
+    real::a,b,siga,sigb,chi2,q
+    integer :: mwt,i,j,k
+    logical :: printted
+    if (trim(methodname)=="cor") then
       do j=1,ny
         do i=1,nx
-          if (mask(i,j)==0) then
+          if (mask(i,j)==maskval) then
             output(i,j)=corrcoef_1d(obs(:,i,j),sim(:,i,j),nt)
           end if
         end do
       end do
-    else
+    elseif (trim(methodname)=="rmse") then
       do j=1,ny
         do i=1,nx
-          if (mask(i,j)==0) then
+          if (mask(i,j)==maskval) then
             output(i,j)=rmse_1d(obs(:,i,j),sim(:,i,j),nt)
           end if
         end do
       end do
+    elseif (trim(methodname)=="mean") then
+      do j=1,ny
+        do i=1,nx
+          if (mask(i,j)==maskval) then
+            output(i,j)=sum(sim(:,i,j))/nt
+          end if
+        end do
+      end do
+    elseif (trim(methodname)=="trend") then
+      do k=1,nt
+       x(k)=k
+      end do
+      mwt=0
+      sig=0
+      printted=.false.
+      do j=1,ny
+        do i=1,nx
+          if (mask(i,j)==maskval) then
+            call fit(x, sim(:,i,j),nt,sig,mwt,a,b,siga,sigb,chi2,q)
+            call lsqtest(x,sim(:,i,j),a,b,nt,q)
+            output(i,j)=b*100 !/sum(y_3d(:,i,j))*nt*100
+!          if (.not.printted) then
+!            print*,"i=",i,"j=",j
+!            print*,output(i,j)
+!            printted=.true.
+!            print*,sim(:,i,j)
+!          end if
+            if (q<0.05) then
+             output(i,j)=b*100 !/sum(y_3d(:,i,j))*nt*100
+            else
+             output(i,j)=0 !-99999
+            end if
+          else
+            output(i,j)=-99999
+          end if
+        end do
+      end do
+
     endif
-  end subroutine corrcoef_2d_mask
+  end subroutine ananual_ana
 
   subroutine rmse_2d_mask(obs,sim,mask,nt,nx,ny,rmse)
     integer,intent(in)               ::nt,nx,ny

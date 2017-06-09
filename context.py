@@ -24,7 +24,7 @@ class field(object):
     self.shapefile=shapefile
     self.datapath=datapath
     self.obsname =obsname
-    if method=="cor" or plottype=="diff":
+    if method=="cor" or method=="rmse" or plottype=="diff" or "Taylor" in plottype:
       self.plotlist.remove(self.obsname)
     self.GCM_name =GCM_name
 
@@ -34,7 +34,7 @@ class field(object):
 class reginalmetfield(field):
   def __init__(self,period,vnames,cases,nlevel,cutpoints,neof,
                method,plottype,shapefile,datapath,obsname,GCM_name,Time_control,
-               wrfinputfile,landmaskfile,masktype,maskval=1,regmapfile=None):
+               wrfinputfile,landmaskfile,masktype,maskval=0,regmapfile=None):
     from netCDF4 import Dataset
     import numpy as np
     import numpy.ma as ma
@@ -86,47 +86,42 @@ class seasonal_data(reginalmetfield):
           fnc     =Dataset(filename,"r")
         except:
           sys.exit("there is no %s"%filename)
-        if   self.period=="daily":
-          self.data[case][vname]=fnc.variables(vname)
-        elif self.period=="monthly" or self.period=="seasonal":
-          YB=int(fnc.variables["time"][ 0])
-          dimsize=fnc.variables[vname].shape
-          if len(dimsize)==5:
-            self.data[case][vname]=fnc.variables[vname][self.yb-YB:self.ye-YB,:,self.nlevel,self.cutpoints[0]:-self.cutpoints[1],self.cutpoints[2]:-self.cutpoints[3]]
-          elif len(dimsize)==4:
-            self.data[case][vname]=fnc.variables[vname][self.yb-YB:self.ye-YB,:,self.cutpoints[0]:-self.cutpoints[1],self.cutpoints[2]:-self.cutpoints[3]]
-          elif len(dimsize)==3:
-            from datetime import datetime
-            from netCDF4 import date2num
-            m2s     ={12:0,3:1,6:2,9:3}
-            s2m     ={0:12,1:3,2:6,3:9}
-            times   =fnc.variables['time']
-            units   =times.units
-            calendar=times.calendar
-            firstdate=num2date(times[0],units,calendar=calendar)
-            lastdate =num2date(times[0],units,calendar=calendar)
-            nyear    =lastdate.year-firstdate.year+1
+        YB=int(fnc.variables["time"][ 0])
+        dimsize=fnc.variables[vname].shape
+        if len(dimsize)==5:
+          self.data[case][vname]=fnc.variables[vname][self.yb-YB:self.ye-YB,:,self.nlevel,self.cutpoints[0]:-self.cutpoints[1],self.cutpoints[2]:-self.cutpoints[3]]
+        elif len(dimsize)==4:
+          self.data[case][vname]=fnc.variables[vname][self.yb-YB:self.ye-YB,:,self.cutpoints[0]:-self.cutpoints[1],self.cutpoints[2]:-self.cutpoints[3]]
+        elif len(dimsize)==3:
+          from datetime import datetime
+          from netCDF4 import date2num
+          m2s     ={12:0,3:1,6:2,9:3}
+          s2m     ={0:12,1:3,2:6,3:9}
+          times   =fnc.variables['time']
+          units   =times.units
+          calendar=times.calendar
+          firstdate=num2date(times[0],units,calendar=calendar)
+          lastdate =num2date(times[0],units,calendar=calendar)
+          nyear    =lastdate.year-firstdate.year+1
 # this is a backward compitalbe implementation however we know it's ugly, hope it will be useless after we update all the post processing
-            nz       = 12 if self.period=="monthly" else 4
-            self.data[case][vname]=np.zeros((self.ye-self.yb,nz,self.nlat,self.nlon))
-            convert=60*60*24 if vname=="PRAVG" else 1
-            for iyear,year in enumerate(range(self.yb,self.ye)):
-              for iseason in range(4):
-                month=s2m[iseason]
-                year_cur= year-1 if iseason==0 else year
-                date_cur=datetime(year_cur,month,1,0,0,0)
-                time_cur=date2num(date_cur,units,calendar=calendar)
-                itime   =np.where(times==time_cur)[0]
-                self.data[case][vname][iyear,iseason,:,:]=convert*fnc.variables[vname][itime,self.cutpoints[0]:-self.cutpoints[1],self.cutpoints[2]:-self.cutpoints[3]]
-          else:
-            sys.exit("dimen size incorrect")
-          _, mask_b = np.broadcast_arrays(self.data[case][vname], self.mask[None,...])
-          self.data[case][vname]=ma.masked_array((self.data[case][vname]), mask=mask_b)
-          if "shift" in plotres[vname]:
-            self.data[case][vname]=self.data[case][vname]+plotres[vname]['shift']
-          print("Read in %s data %s:%s"%(case,self.period,vname))
+          nz       = 12 if self.period=="monthly" else 4
+          self.data[case][vname]=np.zeros((self.ye-self.yb,nz,self.nlat,self.nlon))
+          convert=60*60*24 if vname=="PRAVG" else 1
+          for iyear,year in enumerate(range(self.yb,self.ye)):
+            for iseason in range(4):
+              month=s2m[iseason]
+              year_cur= year-1 if iseason==0 else year
+              date_cur=datetime(year_cur,month,1,0,0,0)
+              time_cur=date2num(date_cur,units,calendar=calendar)
+              itime   =np.where(times==time_cur)[0]
+              self.data[case][vname][iyear,iseason,:,:]=convert*fnc.variables[vname][itime,self.cutpoints[0]:-self.cutpoints[1],self.cutpoints[2]:-self.cutpoints[3]]
         else:
-          sys.exit('Sorry no such an option')
+          sys.exit("dimen size incorrect")
+        _, mask_b = np.broadcast_arrays(self.data[case][vname], self.mask[None,...])
+        self.data[case][vname]=ma.masked_array((self.data[case][vname]), mask=mask_b)
+        if "shift" in plotres[vname]:
+          self.data[case][vname]=self.data[case][vname]+plotres[vname]['shift']
+        print("Read in %s data %s:%s"%(case,self.period,vname))
 
   def Analysis(self):
     import numpy as np
@@ -134,25 +129,17 @@ class seasonal_data(reginalmetfield):
     from constant import seasonname
     import cs_stat
     import sys
-    for case in self.cases:
-      for vname in self.vnames:
-        if self.method=="mean":
-          self.plotdata[case][vname]=np.mean(self.data[case][vname],axis=0)
-        elif self.method=="cor" or self.method=="rmse":
+    for vname in self.vnames:
+      for case in self.cases:
+        if self.method=="cor" or self.method=="rmse" or self.method=="trend" or self.method=="mean":
           self.plotdata[case][vname]= np.zeros((4,self.nlat,self.nlon))
           for k,name in enumerate(seasonname):
-            self.plotdata[case][vname][k,:,:]= cs_stat.cs_stat.corrcoef_2d_mask(
-                                               self.data[case][vname][:,k,:,:],
-                                               self.data[self.obsname][vname][:,k,:,:],
-                                               self.mask,self.method   )
-          _, mask_b = np.broadcast_arrays(self.plotdata[case][vname], self.mask[None,...])
-          self.plotdata[case][vname]=ma.masked_array((self.plotdata[case][vname]), mask=mask_b)
-        elif self.method=="trend":
-          self.plotdata[case][vname]= np.zeros((4,self.nlat,self.nlon))
-          for k,name in enumerate(seasonname):
-            self.plotdata[case][vname][k,:,:]= cs_stat.cs_stat.fit_3d(
-                                               self.data[case][vname][:,k,:,:],
-                                               self.mask,self.maskval   )
+            self.plotdata[case][vname][k,:,:]= cs_stat.cs_stat.ananual_ana(
+                                               sim=self.data[case][vname][:,k,:,:],
+                                               obs=self.data[self.obsname][vname][:,k,:,:],
+                                               mask=self.mask,
+                                               methodname=self.method ,
+                                               maskval=self.maskval  )
           _, mask_b = np.broadcast_arrays(self.plotdata[case][vname], self.mask[None,...])
           self.plotdata[case][vname]=ma.masked_array((self.plotdata[case][vname]), mask=mask_b)
         elif self.method=="eof":
@@ -166,30 +153,27 @@ class seasonal_data(reginalmetfield):
             pcs    = solver.pcs(npcs=self.neof)
             var    = solver.varianceFraction(neigs=self.neof)
             self.plotdata[case][vname].append((eofmap,pcs,var))
-    if "Taylor" in self.plottype:
-      stdrefs={}
-      samples={}
-      for vname in self.vnames:
+      if "Taylor" in self.plottype:
+        stdrefs={}
+        samples={}
         for k,name in enumerate(seasonname):
           stdrefs[name]=ma.std(self.plotdata[self.obsname][vname][k,:,:]) #whether or not compressed has no impact on result
-        for casenumber,case in enumerate(self.cases):
-          if case!=self.obsname:
+          for casenumber,case in enumerate(self.plotlist):
             tempoutput=[]
-            for k,name in enumerate(seasonname):
-              temp=self.plotdata[case][vname][k,:,:]
-              if self.masktype==0:
-                std_sim=np.std(np.ravel(temp))/stdrefs[name]
-                coef=np.corrcoef(np.ravel(temp),np.ravel(self.plotdata[self.obsname][vname][k,:,:]))
-                cor=coef[0,1]
-              else:
-                std_sim=ma.std(temp)/stdrefs[name]
-                coef=np.corrcoef(temp.compressed(),self.plotdata[self.obsname][vname][k,:,:].compressed())
-                cor=coef[0,1]
-              tempoutput.append((std_sim,cor))
+            temp=self.plotdata[case][vname][k,:,:]
+            if self.masktype==0:
+              std_sim=np.std(np.ravel(temp))/stdrefs[name]
+              coef=np.corrcoef(np.ravel(temp),np.ravel(self.plotdata[self.obsname][vname][k,:,:]))
+              cor=coef[0,1]
+            else:
+              std_sim=ma.std(temp)/stdrefs[name]
+              coef=np.corrcoef(temp.compressed(),self.plotdata[self.obsname][vname][k,:,:].compressed())
+              cor=coef[0,1]
+            tempoutput.append((std_sim,cor))
             self.plotdata[case][vname]=tempoutput
-    if self.plottype=="diff":
-      for case in self.plotlist:
-        for vname in self.vnames:
+      if self.plottype=="diff":
+        for case in self.plotlist:
+          print(case)
           self.plotdata[case][vname]=self.plotdata[case][vname]-self.plotdata[self.obsname][vname]
 
 
