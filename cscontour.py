@@ -20,7 +20,7 @@ nicev={"T2M":"T2M","CLDFRA":"CLT","CLDFRAl":"CLL","CLDFRAm":"CLM","CLDFRAh":"CLH
 #style = Style(name="PPT",sidenamefs=3,tickfs=5,format="png",Figsize=(2.73,2.9))
 style = Style(name="PPT",sidenamefs=8,tickfs=7,format="pdf")
 figsizes={4:(8.5,9.0),3:(8.5,5.4)}
-figsizes={5:(8.5,8.4),4:(8.25,7.0),3:(8.5,5.4)}
+figsizes={5:(8.5,8.6),4:(8.25,7.0),3:(8.5,5.4)}
 axes_bar={4:[0.15, 0.18, 0.7, 0.1],3:[0.15, 0.03, 0.7, 0.1]}
 axes_bar={5:[0.15, 0.04, 0.7, 0.1],4:[0.15, 0.03, 0.7, 0.1],3:[0.15, 0.03, 0.7, 0.1]}
 
