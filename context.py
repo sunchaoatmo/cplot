@@ -44,24 +44,33 @@ class reginalmetfield(field):
 
     wrfinput    =Dataset(wrfinputfile)
     lm          =Dataset(landmaskfile)
+    print(regmapfile)
+    if regmapfile:
+      regmapnc    =Dataset(regmapfile)
+      process_dict ={"mask":"LANDMASK","lat":'CLAT',"lon":'CLONG',"terrain":"HGT","regmap":"reg_mask"}
+    else:
+      process_dict ={"mask":"LANDMASK","lat":'CLAT',"lon":'CLONG',"terrain":"HGT"}
     self.truelat1=wrfinput.TRUELAT1
     self.truelat2=wrfinput.TRUELAT2
     self.cen_lat=wrfinput.CEN_LAT
     self.cen_lon=wrfinput.CEN_LON
     self.cutpoints=cutpoints
-    for key,keyname in {"lat":'CLAT',"lon":'CLONG',"terrain":"HGT"}.iteritems():
-       setattr(self,key,wrfinput.variables[keyname][0,cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]])
-    self.nlat,self.nlon=self.lat.shape
     self.maskval=maskval
     self.masktype=masktype
+    for key,keyname in process_dict.iteritems():
+       filenc=regmapnc if keyname=="reg_mask" else wrfinput
+       setattr(self,key,filenc.variables[keyname][0,cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]])
+    self.nlat,self.nlon=self.lat.shape
+
     self.mask= (np.logical_and(lm.variables["landmask"][cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]],
-                wrfinput.variables["LANDMASK"][0,cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]] ))
+                self.mask ))
+
     if masktype==-1:
       self.mask= np.logical_not(self.mask)
+
     self.terrain =ma.masked_array(self.terrain,mask=self.mask)
+
     if regmapfile:
-      regmapnc    =Dataset(regmapfile)
-      self.regmap =regmapnc.variables['reg_mask'][cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]]
       self.regnames=regmapnc.variables['regname']
       self.nregs  =np.max(self.regmap)
 
