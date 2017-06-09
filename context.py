@@ -34,7 +34,7 @@ class field(object):
 class reginalmetfield(field):
   def __init__(self,period,vnames,cases,nlevel,cutpoints,neof,
                method,plottype,shapefile,datapath,obsname,GCM_name,Time_control,
-               wrfinputfile,landmaskfile,masktype,maskval=0,regmapfile=None):
+               wrfinputfile,landmaskfile,masktype,PLOT,maskval=0,regmapfile=None):
     from netCDF4 import Dataset
     import numpy as np
     import numpy.ma as ma
@@ -56,6 +56,10 @@ class reginalmetfield(field):
     self.cutpoints=cutpoints
     self.maskval=maskval
     self.masktype=masktype
+
+    for key in PLOT:
+        setattr(self,key,PLOT[key])
+
     for key,keyname in process_dict.iteritems():
        filenc=regmapnc if keyname=="reg_mask" else wrfinput
        setattr(self,key,filenc.variables[keyname][0,cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]])
@@ -69,6 +73,7 @@ class reginalmetfield(field):
 
     self.terrain =ma.masked_array(self.terrain,mask=self.mask)
 
+
     if regmapfile:
       self.regnames=regmapnc.variables['regname']
       self.nregs  =np.max(self.regmap)
@@ -76,10 +81,10 @@ class reginalmetfield(field):
 class seasonal_data(reginalmetfield):
   def __init__(self,period,vnames,cases,nlevel,cutpoints,neof,
                method,plottype,shapefile,datapath,obsname,GCM_name,Time_control,
-               wrfinputfile,landmaskfile,masktype):
+               wrfinputfile,landmaskfile,masktype,PLOT):
     reginalmetfield.__init__(self,period,vnames,cases,nlevel,cutpoints,neof,
                method,plottype,shapefile,datapath,obsname,GCM_name,Time_control,
-               wrfinputfile,landmaskfile,masktype)
+               wrfinputfile,landmaskfile,masktype,PLOT)
 
   def Read(self):
     from netCDF4 import Dataset,num2date

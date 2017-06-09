@@ -105,10 +105,10 @@ class cwrfplot:
     self.m.drawstates(linewidth=0.08,  color='k') 
     import matplotlib.colors as mc
 #   norm = mc.BoundaryNorm(cleve, 256)
-    norm = mc.BoundaryNorm(cleve[:-1], cmp.N)
+    norm = mc.BoundaryNorm(cleve, cmp.N)
     #norm = mc.BoundaryNorm(cleve, len(cleve))
     #cs = self.m.contourf(self.x,self.y,data,cmap=cmp ,norm=norm,extend='max') #,extend='both')
-    cs = self.m.contourf(self.x,self.y,data,cleve[:-1],cmap=cmp ,norm=norm,extend=self.extend) #,extend='both')
+    cs = self.m.contourf(self.x,self.y,data,cleve,cmap=cmp ,norm=norm,extend=self.extend) #,extend='both')
     if text is not None:
       ax.text(0.5, 0.8, text,
            verticalalignment='bottom', horizontalalignment='center',

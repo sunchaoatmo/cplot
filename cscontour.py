@@ -18,7 +18,7 @@ from constant  import *
 Style = namedtuple('Style', ['name', 'sidenamefs','tickfs','format'])
 nicev={"T2M":"T2M","CLDFRA":"CLT","CLDFRAl":"CLL","CLDFRAm":"CLM","CLDFRAh":"CLH","ASWDNS":"SWd","TCWPC":"TCWPC","Pr":"Pr","ALWDNS":"LWd","ALWUPS":"LWu","TMAX":"T2MAX","TMIN":"T2MIN","PRAVG":"Pr","PCT":"PCT","RAINYDAYS":"RAINYDAYS","CDD":"CDD","AT2M":"AT2M"}
 #style = Style(name="PPT",sidenamefs=3,tickfs=5,format="png",Figsize=(2.73,2.9))
-style = Style(name="PPT",sidenamefs=8,tickfs=7,format="pdf")
+style = Style(name="PPT",sidenamefs=8,tickfs=7,format="png")
 figsizes={4:(8.5,9.0),3:(8.5,5.4)}
 figsizes={5:(8.5,8.6),4:(8.25,7.0),3:(8.5,5.4)}
 axes_bar={4:[0.15, 0.18, 0.7, 0.1],3:[0.15, 0.03, 0.7, 0.1]}
@@ -44,7 +44,7 @@ def seasonalmap(data,vname):
             0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
     cmp   =plt.get_cmap('bwr') #plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
   elif data.method=="rmse":
-    clevel=plotres[vname]['cleve3']
+    clevel=getattr(data,"%s_%s"%(vname.lower(),"clevel0"))
     cmp   =plt.get_cmap('YlOrRd') #plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
   elif data.method=="trend":
     suptitle="%s (%s/100 years)"%(data.title[vname],plotres[vname]['unit'])
@@ -55,12 +55,12 @@ def seasonalmap(data,vname):
     clevel.remove(0)
   else:
     extend="max"
-    clevel=plotres[vname]['cleve1']
+    clevel=getattr(data,"%s_%s"%(vname.lower(),"clevel1"))
     cmp=plotres[vname]['cmp1']
   if data.plottype=="diff":
     extend="both"
     suptitle="%s bias ( %s)"%(data.title[vname],plotres[vname]['unit'])
-    clevel=plotres[vname]['cleve0']
+    clevel=getattr(data,"%s_%s"%(vname.lower(),"clevel0"))
     cmp=plotres[vname]['cmp2']
   if style.format=="pdf":
     pp = PdfPages(contourfilename+'.pdf')
@@ -68,7 +68,6 @@ def seasonalmap(data,vname):
     page=0
 
   
-  print(clevel)
   fig.suptitle(suptitle, fontsize=12, fontweight='bold')
 
 ###################################### Plot Contour ########################################

@@ -215,7 +215,7 @@ from collections import defaultdict
 plotres= defaultdict(dict)
 
 ##########################set the plot related parameters#####################
-plotres['XRSUR']['cleve1']=[x*1e-6 for x in range(31)]
+#plotres['XRSUR']['cleve1']=[x*1e-6 for x in range(31)]
 plotres['XRSUR']['cmp1']=plt.get_cmap('jet')
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['XRSUR']['cmp2']=cmp
@@ -224,7 +224,7 @@ plotres['XRSUR']['unit']="kg/m2/day"
 plotres['XRSUR']['mask']=True
 plotres['XRSUR']['violion']=False
 
-plotres['XRBAS']['cleve1']=[x*1e-6 for x in range(31)]
+#plotres['XRBAS']['cleve1']=[x*1e-6 for x in range(31)]
 plotres['XRBAS']['cmp1']=plt.get_cmap('jet')
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['XRBAS']['cmp2']=cmp
@@ -233,7 +233,7 @@ plotres['XRBAS']['mask']=True
 plotres['XRBAS']['violion']=False
 
 
-plotres['SFROFF']['cleve1']=[x*10000 for x in range(31)]
+#plotres['SFROFF']['cleve1']=[x*10000 for x in range(31)]
 plotres['SFROFF']['cmp1']=plt.get_cmap('jet')
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['SFROFF']['cmp2']=cmp
@@ -244,7 +244,7 @@ plotres['SFROFF']['violion']=False
 
 
 
-plotres['XSMTg']['cleve1']=[x*20 for x in range(1,20)] #range(0, 1,0.05)
+#plotres['XSMTg']['cleve1']=[x*20 for x in range(1,20)] #range(0, 1,0.05)
 plotres['XSMTg']['cmp1']=plt.get_cmap('jet')
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['XSMTg']['cmp2']=cmp
@@ -253,8 +253,8 @@ plotres['XSMTg']['mask']=True
 plotres['XSMTg']['violion']=False
 plotres['XSMTg']['vlevel']=4
 
-plotres['AODNIR']['cleve0']=[x*0.05 for x in range(0,11)] #range(0, 1,0.05)
-plotres['AODNIR']['cleve1']=[x*0.05 for x in range(0,11)] #range(0, 1,0.05)
+#plotres['AODNIR']['cleve0']=[x*0.05 for x in range(0,11)] #range(0, 1,0.05)
+#plotres['AODNIR']['cleve1']=[x*0.05 for x in range(0,11)] #range(0, 1,0.05)
 plotres['AODNIR']['cmp1']=plt.get_cmap('jet')
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['AODNIR']['cmp2']=cmp
@@ -263,8 +263,8 @@ plotres['AODNIR']['unit']=""
 plotres['AODNIR']['mask']=True
 
 
-plotres['AODVIS']['cleve0']=[x*0.05 for x in range(0,11)] #range(0, 1,0.05)
-plotres['AODVIS']['cleve1']=[x*0.05 for x in range(0,11)] #range(0, 1,0.05)
+#plotres['AODVIS']['cleve0']=[x*0.05 for x in range(0,11)] #range(0, 1,0.05)
+#plotres['AODVIS']['cleve1']=[x*0.05 for x in range(0,11)] #range(0, 1,0.05)
 plotres['AODVIS']['cmp1']=plt.get_cmap('jet')
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['AODVIS']['cmp2']=cmp
@@ -273,7 +273,7 @@ plotres['AODVIS']['unit']=""
 plotres['AODVIS']['mask']=True
 
 
-plotres['CLDFRAh']['cleve1']=[x*0.05 for x in range(0,21)] #range(0, 1,0.05)
+#plotres['CLDFRAh']['cleve1']=[x*0.05 for x in range(0,21)] #range(0, 1,0.05)
 plotres['CLDFRAh']['cmp1']=plt.get_cmap('jet')
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['CLDFRAh']['cmp2']=cmp
@@ -285,7 +285,7 @@ plotres['CLDFRAh']['vlevel']=3
 
 
 
-plotres['CLDFRAm']['cleve1']=[x*0.05 for x in range(0,21)] #range(0, 1,0.05)
+#plotres['CLDFRAm']['cleve1']=[x*0.05 for x in range(0,21)] #range(0, 1,0.05)
 plotres['CLDFRAm']['cmp1']=plt.get_cmap('jet')
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['CLDFRAm']['cmp2']=cmp
@@ -298,7 +298,7 @@ plotres['CLDFRAm']['vlevel']=2
 
 
 
-plotres['CLDFRAl']['cleve1']=[x*0.05 for x in range(0,21)] #range(0, 1,0.05)
+#plotres['CLDFRAl']['cleve1']=[x*0.05 for x in range(0,21)] #range(0, 1,0.05)
 plotres['CLDFRAl']['cmp1']=plt.get_cmap('jet')
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['CLDFRAl']['cmp2']=cmp
@@ -309,7 +309,7 @@ plotres['CLDFRAl']['violion']=False
 plotres['CLDFRAl']['vlevel']=1
 
 
-plotres['CLDFRA']['cleve1']=[x*0.05 for x in range(0,21)] #range(0, 1,0.05)
+#plotres['CLDFRA']['cleve1']=[x*0.05 for x in range(0,21)] #range(0, 1,0.05)
 plotres['CLDFRA']['cmp1']=plt.get_cmap('jet')
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['CLDFRA']['cmp2']=cmp
@@ -321,7 +321,7 @@ plotres['CLDFRA']['vlevel']=0
 
 
 
-plotres['QVAPOR']['cleve1']=range(0, 20,1)
+#plotres['QVAPOR']['cleve1']=range(0, 20,1)
 plotres['QVAPOR']['cmp1']=plt.get_cmap('jet')
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['QVAPOR']['cmp2']=cmp
@@ -333,7 +333,7 @@ plotres['QVAPOR']['vlevel']=21
 
 
 
-plotres['TCWPC']['cleve1']=range(0, 200,10)
+#plotres['TCWPC']['cleve1']=range(0, 200,10)
 plotres['TCWPC']['cmp1']=plt.get_cmap('jet')
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['TCWPC']['cmp2']=cmp
@@ -343,7 +343,7 @@ plotres['TCWPC']['violion']=False
 
 
 
-plotres['V']['cleve1']=range(-10, 10,1)
+#plotres['V']['cleve1']=range(-10, 10,1)
 plotres['V']['cmp1']=plt.get_cmap('jet')
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['V']['cmp2']=cmp
@@ -353,7 +353,7 @@ plotres['V']['violion']=False
 plotres['V']['vlevel']=21
 
 
-plotres['U']['cleve1']=range(-10, 10,1)
+#plotres['U']['cleve1']=range(-10, 10,1)
 plotres['U']['cmp1']=plt.get_cmap('jet')
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['U']['cmp2']=cmp
@@ -363,7 +363,7 @@ plotres['U']['violion']=False
 plotres['U']['vlevel']=21
 
 
-plotres['PSL']['cleve1']=range(1000, 1024,1)
+#plotres['PSL']['cleve1']=range(1000, 1024,1)
 plotres['PSL']['cmp1']=plt.get_cmap('jet')
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['PSL']['cmp2']=cmp
@@ -372,7 +372,7 @@ plotres['PSL']['convertcoef']=0.01
 plotres['PSL']['mask']=False
 plotres['PSL']['violion']=False
 
-plotres['PS']['cleve1']=range(700, 1030,5)
+#plotres['PS']['cleve1']=range(700, 1030,5)
 plotres['PS']['cmp1']=plt.get_cmap('jet')
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['PS']['cmp2']=cmp
@@ -382,7 +382,7 @@ plotres['PS']['mask']=False
 plotres['PS']['violion']=False
 
 
-plotres['ALBEDO']['cleve1']=range(0, 60,5)
+#plotres['ALBEDO']['cleve1']=range(0, 60,5)
 plotres['ALBEDO']['cmp1']=plt.get_cmap('jet')
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['ALBEDO']['cmp2']=cmp
@@ -392,90 +392,67 @@ plotres['ALBEDO']['mask']=False
 plotres['ALBEDO']['violion']=False
 
 
-#plotres['ASWUPT']['cleve0']=list(drange(0.2,8,0.2))  #np.linspace(1,10,num=20) #range(1,11)
-plotres['ASWUPT']['cleve1']=range(80,160,10)
-#  import colormaps as cmaps
-#  cmp=cmap=cmaps.viridis
+#plotres['ASWUPT']['cleve1']=range(80,160,10)
 plotres['ASWUPT']['cmp1']=plt.get_cmap('jet')
-#plotres['ASWUPT']['cmp1']=cm.s3pcpn
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['ASWUPT']['cmp2']=cmp
 plotres['ASWUPT']['unit']="$W m^{-2}$"
-#plotres['ASWUPT']['convertcoef']=*60*24
 plotres['ASWUPT']['mask']=True
 plotres['ASWUPT']['violion']=False
 
-plotres['ASWUPS']['cleve1']=range(0,210,10)
-#  import colormaps as cmaps
-#  cmp=cmap=cmaps.viridis
+#plotres['ASWUPS']['cleve1']=range(0,210,10)
 plotres['ASWUPS']['cmp1']=plt.get_cmap('jet')
-#plotres['ASWUPS']['cmp1']=cm.s3pcpn
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['ASWUPS']['cmp2']=cmp
 plotres['ASWUPS']['unit']="$W m^{-2}$"
-#plotres['ASWUPS']['convertcoef']=*60*24
 plotres['ASWUPS']['mask']=True
 plotres['ASWUPS']['violion']=False
 
-plotres['ALWDNS']['cleve1']=range(20,410,50)
-plotres['ALWDNS']['cleve0']=range(20,410,10)
+#plotres['ALWDNS']['cleve1']=range(20,410,50)
+#plotres['ALWDNS']['cleve0']=range(20,410,10)
 plotres['ALWDNS']['cmp1']=plt.get_cmap('jet')
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['ALWDNS']['cmp2']=cmp
 plotres['ALWDNS']['unit']="$W m^{-2}$"
-#plotres['ALWDNS']['convertcoef']=*60*24
 plotres['ALWDNS']['mask']=True
 plotres['ALWDNS']['violion']=False
 
 
-plotres['ASWDNS']['cleve1']=range(20,410,50)
-plotres['ASWDNS']['cleve0']=range(20,410,10)
+#plotres['ASWDNS']['cleve1']=range(20,410,50)
+#plotres['ASWDNS']['cleve0']=range(20,410,10)
 plotres['ASWDNS']['cmp1']=plt.get_cmap('jet')
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['ASWDNS']['cmp2']=cmp
 plotres['ASWDNS']['unit']="$W m^{-2}$"
-#plotres['ASWDNS']['convertcoef']=*60*24
 plotres['ASWDNS']['mask']=True
 plotres['ASWDNS']['violion']=False
 
-plotres['ALWUPS']['cleve1']=range(200,510,10)
-#  import colormaps as cmaps
-#  cmp=cmap=cmaps.viridis
+#plotres['ALWUPS']['cleve1']=range(200,510,10)
 plotres['ALWUPS']['cmp1']=plt.get_cmap('jet')
-#plotres['ALWUPS']['cmp1']=cm.s3pcpn
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['ALWUPS']['cmp2']=cmp
 plotres['ALWUPS']['unit']="$W m^{-2}$"
-#plotres['ALWUPS']['convertcoef']=*60*24
 plotres['ALWUPS']['mask']=True
 plotres['ALWUPS']['violion']=False
 
-plotres['ALWDNS']['cleve1']=range(150,450,10)
-#  import colormaps as cmaps
-#  cmp=cmap=cmaps.viridis
+#plotres['ALWDNS']['cleve1']=range(150,450,10)
 plotres['ALWDNS']['cmp1']=plt.get_cmap('jet')
-#plotres['ALWDNS']['cmp1']=cm.s3pcpn
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['ALWDNS']['cmp2']=cmp
 plotres['ALWDNS']['unit']="$W m^{-2}$"
-#plotres['ALWDNS']['convertcoef']=*60*24
 plotres['ALWDNS']['mask']=True
 plotres['ALWDNS']['violion']=False
 
-plotres['ALWUPT']['cleve1']=range(150,360,10)
-#  import colormaps as cmaps
-#  cmp=cmap=cmaps.viridis
+#plotres['ALWUPT']['cleve1']=range(150,360,10)
 plotres['ALWUPT']['cmp1']=plt.get_cmap('jet')
-#plotres['ALWUPT']['cmp1']=cm.s3pcpn
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['ALWUPT']['cmp2']=cmp
 plotres['ALWUPT']['unit']="$W m^{-2}$"
-#plotres['ALWUPT']['convertcoef']=*60*24
 plotres['ALWUPT']['mask']=True
 plotres['ALWUPT']['violion']=False
 
-plotres['PrMAX']['cleve0']=range(1,35)
-plotres['PrMAX']['cleve1']=range(0,51,5)
+#plotres['PrMAX']['cleve0']=range(1,35)
+#plotres['PrMAX']['cleve1']=range(0,51,5)
 #  import colormaps as cmaps
 #  cmp=cmap=cmaps.viridis
 plotres['PrMAX']['cmp1']=plt.get_cmap('jet')
@@ -488,45 +465,18 @@ plotres['PrMAX']['mask']=True
 plotres['PrMAX']['violion']=True
 
 
-nws_precip_colors = [
-    "#04e9e7",  # 0.01 - 0.10 inches
-    "#019ff4",  # 0.10 - 0.25 inches
-    "#0300f4",  # 0.25 - 0.50 inches
-    "#02fd02",  # 0.50 - 0.75 inches
-    "#01c501",  # 0.75 - 1.00 inches
-    "#008e00",  # 1.00 - 1.50 inches
-    "#fdf802",  # 1.50 - 2.00 inches
-    "#e5bc00",  # 2.00 - 2.50 inches
-    "#fd9500",  # 2.50 - 3.00 inches
-    "#fd0000",  # 3.00 - 4.00 inches
-    "#d40000",  # 4.00 - 5.00 inches
-    "#bc0000",  # 5.00 - 6.00 inches
-    "#f800fd",  # 6.00 - 8.00 inches
-    "#9854c6",  # 8.00 - 10.00 inches
-    "#653700",  # 8.00 - 10.00 inches
-    "#fdfdfd"   # 10.00+
-]
-"""
-cmap = [ (242, 242, 242), (191, 239, 255), (178, 223, 238), 
-            (154, 192, 205), (  0, 235, 235), (  0, 163, 247), 
-            (  0, 255,   0), (  0, 199,   0), (  0, 143,   0), 
-            (  0,  63,   0), (255, 255,   0), (255, 143,   0),
-            (255,   0,   0), (215,   0,   0), (191,   0,   0),
-            (255,   0, 255), (155,  87, 203), ( 92,  52, 176) ,]
-"""
-import matplotlib
-plotres['PRAVG']['cleve1']=[0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5,6,7,8,9,10,11,12,13,14]
-plotres['PRAVG']['cleve3']=range(10)
+
+#plotres['PRAVG']['cleve1']=[0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5,6,7,8,9,10,11,12,13,14]
+#plotres['PRAVG']['cleve3']=range(10)
 plotres['PRAVG']['cmp1']=cmap_cs_precp
 plotres['PRAVG']['cmp2']='RdBu_r'
 cmp   =plt.get_cmap('Spectral_r');cmp.set_over('maroon');cmp.set_under('w')
 plotres['PRAVG']['cmp3']=cmp #plt.get_cmap('jet')
 plotres['PRAVG']['unit']="mm/day"
-#plotres['PRAVG']['convertcoef']=60*60*24
 plotres['PRAVG']['violion']=True
 
-plotres['R95T']['cleve1']=[x*0.04 for x in range(0,21)] #range(0, 1,0.05)
-plotres['R95T']['cleve0']=[x*0.04 for x in range(0,21)] #range(0, 1,0.05)
+#plotres['R95T']['cleve1']=[x*0.04 for x in range(0,21)] #range(0, 1,0.05)
+#plotres['R95T']['cleve0']=[x*0.04 for x in range(0,21)] #range(0, 1,0.05)
 plotres['R95T']['cmp1']=plt.get_cmap('jet')
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['R95T']['cmp2']=cmp
@@ -534,20 +484,16 @@ plotres['R95T']['unit']=""
 plotres['R95T']['convertcoef']=1
 
 
-plotres['PCT']['cleve0']=[0,2,4,6,8,10,15,20,25,30,40,50,60]
-plotres['PCT']['cleve1']=[0,2,4,6,8,10,15,20,25,30,40,50,60]
-plotres['PCT']['cleve1']=[2,4,6,8,10,12,14,16,18,20,25,30,35,40,45,50,55,60]
-plotres['PCT']['cleve1']=[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50]
+#plotres['PCT']['cleve0']=[0,2,4,6,8,10,15,20,25,30,40,50,60]
+#plotres['PCT']['cleve1']=[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50]
 plotres['PCT']['cmp1']=cmap_cs_precp
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('w')
 plotres['PCT']['cmp2']=cmp
 plotres['PCT']['unit']="mm/day"
 plotres['PCT']['convertcoef']=1
 
-plotres['PCT99']['cleve0']=[0,2,4,6,8,10,15,20,25,30,40,50,60]
-plotres['PCT99']['cleve1']=[0,2,4,6,8,10,15,20,25,30,40,50,60]
-plotres['PCT99']['cleve1']=[2,4,6,8,10,12,14,16,18,20,25,30,35,40,45,50,55,60]
-plotres['PCT99']['cleve1']=[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50]
+#plotres['PCT99']['cleve0']=[0,2,4,6,8,10,15,20,25,30,40,50,60]
+#plotres['PCT99']['cleve1']=[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50]
 plotres['PCT99']['cmp1']=cmap_cs_precp
 cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('w')
 plotres['PCT99']['cmp2']=cmp
@@ -555,51 +501,48 @@ plotres['PCT99']['unit']="mm/day"
 plotres['PCT99']['convertcoef']=1
 
 
-plotres['CDD']['cleve0']=[-25,-20,-15,-10,-5,5,10,15,20,25]
-plotres['CDD']['cleve0']=[-20,-18,-16,-14,-10,-8,-6,-4,-2,2,4,6,8,10,12,14,16,18,20,22]
-plotres['CDD']['cleve1']=[4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50]
+#plotres['CDD']['cleve0']=[-20,-18,-16,-14,-10,-8,-6,-4,-2,2,4,6,8,10,12,14,16,18,20,22]
+#plotres['CDD']['cleve1']=[4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50]
 plotres['CDD']['cmp1']=cmap_cs_precp
 plotres['CDD']['cmp2']=None
 plotres['CDD']['unit']="day"
 plotres['CDD']['convertcoef']=1
 plotres['CDD']['mask']=True
 
-plotres['SDII']['cleve0']=range(1,15)
-plotres['SDII']['cleve1']=range(1,20)
+#plotres['SDII']['cleve0']=range(1,15)
+#plotres['SDII']['cleve1']=range(1,20)
 plotres['SDII']['cmp1']=cmap_cs_precp
 plotres['SDII']['cmp2']=None
 plotres['SDII']['unit']="mm/day"
 plotres['SDII']['convertcoef']=1
 plotres['SDII']['mask']=True
 
-plotres['R5D']['cleve0']=[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50]
-plotres['R5D']['cleve1']=[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50]
+#plotres['R5D']['cleve0']=[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50]
+#plotres['R5D']['cleve1']=[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50]
 plotres['R5D']['cmp1']=cmap_cs_precp
 plotres['R5D']['cmp2']=None
 plotres['R5D']['unit']="mm/day"
 plotres['R5D']['convertcoef']=1 # divided by 5 days
 plotres['R5D']['mask']=True
 
-plotres['R10']['cleve0']=[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50]
-plotres['R10']['cleve1']=[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50]
+#plotres['R10']['cleve0']=[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50]
+#plotres['R10']['cleve1']=[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50]
 plotres['R10']['cmp1']=cmap_cs_precp
-#plotres['R10']['cmp1']=plt.get_cmap('YlGnBu')
 plotres['R10']['cmp2']=None
 plotres['R10']['unit']="day"
 plotres['R10']['convertcoef']=1
 plotres['R10']['mask']=True
 
-plotres['RAINYDAYS']['cleve0']=range(5,95,5)
-plotres['RAINYDAYS']['cleve1']=range(5,95,5)
-#plotres['RAINYDAYS']['cmp1']=plt.get_cmap('jet');cmp.set_over('maroon');cmp.set_under('w')
+#plotres['RAINYDAYS']['cleve0']=range(5,95,5)
+#plotres['RAINYDAYS']['cleve1']=range(5,95,5)
 plotres['RAINYDAYS']['cmp1']=cmap_cs_precp
 plotres['RAINYDAYS']['cmp2']=None
 plotres['RAINYDAYS']['unit']="day"
 plotres['RAINYDAYS']['convertcoef']=1
 plotres['RAINYDAYS']['mask']=True
 
-plotres['T2MAX']['cleve1']=range(-10,41)
-plotres['T2MAX']['cleve0']=[-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7]
+#plotres['T2MAX']['cleve1']=range(-10,41)
+#plotres['T2MAX']['cleve0']=[-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7]
 plotres['T2MAX']['cmp1']=plt.get_cmap('jet')
 cmp   =cmap_BWR
 plotres['T2MAX']['cmp2']=cmp
@@ -609,8 +552,8 @@ plotres['T2MAX']['mask']=True
 plotres['T2MAX']['valuemask']=True
 plotres['T2MAX']['shift']=-273.15
 
-plotres['T2MIN']['cleve1']=range(-10,41)
-plotres['T2MIN']['cleve0']=[-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7]
+#plotres['T2MIN']['cleve1']=range(-10,41)
+#plotres['T2MIN']['cleve0']=[-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7]
 plotres['T2MIN']['cmp1']=plt.get_cmap('jet')
 cmp   =cmap_BWR
 plotres['T2MIN']['cmp2']=cmp
@@ -621,9 +564,9 @@ plotres['T2MIN']['valuemask']=True
 plotres['T2MIN']['shift']=-273.15
 
 
-plotres['AT2M']['cleve0']=[-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7]
-plotres['AT2M']['cleve1']=range(-10,31,2)
-plotres['AT2M']['cleve3']=range(10)
+#plotres['AT2M']['cleve0']=[-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7]
+#plotres['AT2M']['cleve1']=range(-10,31,2)
+#plotres['AT2M']['cleve3']=range(10)
 plotres['AT2M']['cmp1']=plt.get_cmap('jet')
 cmp   =cmap_BWR
 plotres['AT2M']['cmp2']=cmp
@@ -632,11 +575,9 @@ plotres['AT2M']['convertcoef']=1
 plotres['AT2M']['valuemask']=True
 plotres['AT2M']['shift']=-273.15
 
-plotres['AT2M97']['cleve0']=[-20,-18,-16,-14,-10,-8,-6,-4,-2,2,4,6,8,10,12,14,16,18,20,22]
-plotres['AT2M97']['cleve0']=[-10.0, -9.5, -9.0, -8.5, -8.0, -7.5, -7.0, -6.5, -6.0, -5.5, -5.0, -4.5, -4.0, -3.5, -3.0, -2.5, -2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0]
-plotres['AT2M97']['cleve0']=[-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,  1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-plotres['AT2M97']['cleve1']=range(-15,35,2)
-plotres['AT2M97']['cleve3']=range(10)
+#plotres['AT2M97']['cleve0']=[-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,  1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+#plotres['AT2M97']['cleve1']=range(-15,35,2)
+#plotres['AT2M97']['cleve3']=range(10)
 plotres['AT2M97']['cmp1']=plt.get_cmap('gist_rainbow_r')
 cmp   = plt.get_cmap('PuOr_r') #plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
 plotres['AT2M97']['cmp2']=cmp
@@ -645,9 +586,9 @@ plotres['AT2M97']['convertcoef']=1
 plotres['AT2M97']['valuemask']=True
 plotres['AT2M97']['shift']=-273.15
 
-plotres['DTR']['cleve0']=[-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7]
-plotres['DTR']['cleve1']=range(1,20,1)
-plotres['DTR']['cleve3']=range(10)
+#plotres['DTR']['cleve0']=[-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7]
+#plotres['DTR']['cleve1']=range(1,20,1)
+#plotres['DTR']['cleve3']=range(10)
 plotres['DTR']['cmp1']=cmap_cs_precp
 cmp   =cmap_BWR
 plotres['DTR']['cmp2']=cmp
