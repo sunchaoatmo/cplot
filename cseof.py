@@ -69,7 +69,6 @@ def eofplot(data,vname):
       ax1   =plt.subplot(gs1[npc])
       ax1.text(locx, 0.83, name, color='black', fontsize=3, bbox=props,ha='center',weight='bold',family='monospace')
       var=data.plotdata[data.obsname][vname][k][2]
-      eof=data.plotdata[data.obsname][vname][k][0]
       ax1.set_title("Variance Explained:%5.2f%%"%(var[npc]*100),fontsize=4)
       for icase,case in enumerate(data.cases):
         linewidth=0.4
