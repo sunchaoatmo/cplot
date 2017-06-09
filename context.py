@@ -19,6 +19,7 @@ class field(object):
     self.title   ={}
     for vname in vnames:
       self.title[vname]="%s %s %s-%s"%(vname,method if method!="mean" else "",self.yb,self.ye)
+#     self.title[vname]="%s %s %s-%s"%(vname.replace("2",""),method if method!="mean" else "",self.yb,self.ye)
     self.plottype=plottype
     self.shapefile=shapefile
     self.datapath=datapath
@@ -158,12 +159,7 @@ class seasonal_data(reginalmetfield):
           from eofs.standard import Eof
           self.plotdata[case][vname]=[]
           for k,name in enumerate(seasonname):
-            if self.period=="seasonal":
-              temp   =self.data[case][vname][:,k,:,:]
-            elif self.period=="monthly":
-              temp   =month2season(self.data[case][vname],k)
-            else:
-              sys.exit('sorry no such a period')
+            temp   =self.data[case][vname][:,k,:,:]
             temp   =temp-temp.mean(axis=0)
             solver = Eof(temp)
             eofmap = solver.eofs(neofs=self.neof)
