@@ -234,10 +234,6 @@ class daily_data(reginalmetfield):
     for key,item in PDF.update(Hovmoller).iteritems():
        setattr(self,key,item)
 
-    if self.method=="cor":
-      self.x_min=-1.0
-      self.x_max= 1.0
-
   def Read(self):
     from netCDF4 import Dataset,num2date
     import numpy as np
