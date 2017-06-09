@@ -158,19 +158,15 @@ class seasonal_data(reginalmetfield):
         samples={}
         for k,name in enumerate(seasonname):
           stdrefs[name]=ma.std(self.plotdata[self.obsname][vname][k,:,:]) #whether or not compressed has no impact on result
-          for casenumber,case in enumerate(self.plotlist):
-            tempoutput=[]
+        for casenumber,case in enumerate(self.plotlist):
+          tempoutput=[]
+          for k,name in enumerate(seasonname):
             temp=self.plotdata[case][vname][k,:,:]
-            if self.masktype==0:
-              std_sim=np.std(np.ravel(temp))/stdrefs[name]
-              coef=np.corrcoef(np.ravel(temp),np.ravel(self.plotdata[self.obsname][vname][k,:,:]))
-              cor=coef[0,1]
-            else:
-              std_sim=ma.std(temp)/stdrefs[name]
-              coef=np.corrcoef(temp.compressed(),self.plotdata[self.obsname][vname][k,:,:].compressed())
-              cor=coef[0,1]
+            std_sim=ma.std(temp)/stdrefs[name]
+            coef=np.corrcoef(temp.compressed(),self.plotdata[self.obsname][vname][k,:,:].compressed())
+            cor=coef[0,1]
             tempoutput.append((std_sim,cor))
-            self.plotdata[case][vname]=tempoutput
+          self.plotdata[case][vname]=tempoutput
       if self.plottype=="diff":
         for case in self.plotlist:
           print(case)
