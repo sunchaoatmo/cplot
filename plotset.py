@@ -82,6 +82,7 @@ sim_nicename={"ERI":"ERI",
              "PRAVG":"PR",
              "AT2M97":"A97",
              "SDII":"DI",
+             "CN_OBS":"OBS",
              "RAINYDAYS":"RD",
              "run_RegCM4.6":"RegCM\n4.6",
              "run_RegCM4.5":"RegCM\n4.5",
@@ -597,27 +598,27 @@ plotres['RAINYDAYS']['unit']="day"
 plotres['RAINYDAYS']['convertcoef']=1
 plotres['RAINYDAYS']['mask']=True
 
-plotres['TMAX']['cleve1']=range(-10,41)
-plotres['TMAX']['cleve0']=np.linspace(-10,30,num=20) #range(1,11)
-plotres['TMAX']['cmp1']=plt.get_cmap('jet')
-cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
-plotres['TMAX']['cmp2']=cmp
-plotres['TMAX']['unit']="$^\circ$C"
-plotres['TMAX']['convertcoef']=1
-plotres['TMAX']['mask']=True
-plotres['TMAX']['valuemask']=True
-plotres['TMAX']['shift']=-273.15
+plotres['T2MAX']['cleve1']=range(-10,41)
+plotres['T2MAX']['cleve0']=[-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7]
+plotres['T2MAX']['cmp1']=plt.get_cmap('jet')
+cmp   =cmap_BWR
+plotres['T2MAX']['cmp2']=cmp
+plotres['T2MAX']['unit']="$^\circ$C"
+plotres['T2MAX']['convertcoef']=1
+plotres['T2MAX']['mask']=True
+plotres['T2MAX']['valuemask']=True
+plotres['T2MAX']['shift']=-273.15
 
-plotres['TMIN']['cleve1']=range(-10,41)
-plotres['TMIN']['cleve0']=np.linspace(-10,30,num=20) #range(1,11)
-plotres['TMIN']['cmp1']=plt.get_cmap('jet')
-cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
-plotres['TMIN']['cmp2']=cmp
-plotres['TMIN']['unit']="$^\circ$C"
-plotres['TMIN']['convertcoef']=1
-plotres['TMIN']['mask']=True
-plotres['TMIN']['valuemask']=True
-plotres['TMIN']['shift']=-273.15
+plotres['T2MIN']['cleve1']=range(-10,41)
+plotres['T2MIN']['cleve0']=[-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7]
+plotres['T2MIN']['cmp1']=plt.get_cmap('jet')
+cmp   =cmap_BWR
+plotres['T2MIN']['cmp2']=cmp
+plotres['T2MIN']['unit']="$^\circ$C"
+plotres['T2MIN']['convertcoef']=1
+plotres['T2MIN']['mask']=True
+plotres['T2MIN']['valuemask']=True
+plotres['T2MIN']['shift']=-273.15
 
 
 plotres['AT2M']['cleve0']=[-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7]
@@ -643,3 +644,14 @@ plotres['AT2M97']['unit']="$^\circ$C"
 plotres['AT2M97']['convertcoef']=1
 plotres['AT2M97']['valuemask']=True
 plotres['AT2M97']['shift']=-273.15
+
+plotres['DTR']['cleve0']=[-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7]
+plotres['DTR']['cleve1']=range(1,20,1)
+plotres['DTR']['cleve3']=range(10)
+plotres['DTR']['cmp1']=cmap_cs_precp
+cmp   =cmap_BWR
+plotres['DTR']['cmp2']=cmp
+plotres['DTR']['unit']="$^\circ$C"
+plotres['DTR']['convertcoef']=1
+plotres['DTR']['valuemask']=True
+
