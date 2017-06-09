@@ -139,18 +139,7 @@ class seasonal_data(reginalmetfield):
     import sys
     for vname in self.vnames:
       for case in self.cases:
-        if self.method=="cor" or self.method=="rmse" or self.method=="trend" or self.method=="mean":
-          self.plotdata[case][vname]= np.zeros((4,self.nlat,self.nlon))
-          for k,name in enumerate(seasonname):
-            self.plotdata[case][vname][k,:,:]= cs_stat.cs_stat.ananual_ana(
-                                               sim=self.data[case][vname][:,k,:,:],
-                                               obs=self.data[self.obsname][vname][:,k,:,:],
-                                               mask=self.mask,
-                                               methodname=self.method ,
-                                               maskval=self.maskval  )
-#         _, mask_b = np.broadcast_arrays(self.plotdata[case][vname], self.mask[None,...])
-#         self.plotdata[case][vname]=ma.masked_array((self.plotdata[case][vname]), mask=mask_b)
-        elif self.method=="eof":
+        if self.method=="eof":
           from eofs.standard import Eof
           self.plotdata[case][vname]=[]
           for k,name in enumerate(seasonname):
@@ -161,23 +150,33 @@ class seasonal_data(reginalmetfield):
             pcs    = solver.pcs(npcs=self.neof)
             var    = solver.varianceFraction(neigs=self.neof)
             self.plotdata[case][vname].append((eofmap,pcs,var))
-      if "Taylor" in self.plottype:
-        stdrefs={}
-        samples={}
-        for k,name in enumerate(seasonname):
-          stdrefs[name]=ma.std(self.plotdata[self.obsname][vname][k,:,:]) #whether or not compressed has no impact on result
-        for casenumber,case in enumerate(self.plotlist):
+        else: #if self.method=="cor" or self.method=="rmse" or self.method=="trend" or self.method=="mean":
+          self.plotdata[case][vname]= np.zeros((4,self.nlat,self.nlon))
+          for k,name in enumerate(seasonname):
+            self.plotdata[case][vname][k,:,:]= cs_stat.cs_stat.ananual_ana(
+                                               sim=self.data[case][vname][:,k,:,:],
+                                               obs=self.data[self.obsname][vname][:,k,:,:],
+                                               mask=self.mask,
+                                               methodname=self.method ,
+                                               maskval=self.maskval  )
+          _, mask_b = np.broadcast_arrays(self.plotdata[case][vname], self.mask[None,...])
+          self.plotdata[case][vname]=ma.masked_array((self.plotdata[case][vname]), mask=mask_b)
+
+
+      for casenumber,case in enumerate(self.plotlist):
+        if "Taylor" in self.plottype:
+          stdrefs={}
+          samples={}
           tempoutput=[]
           for k,name in enumerate(seasonname):
+            stdrefs[name]=ma.std(self.plotdata[self.obsname][vname][k,:,:]) #whether or not compressed has no impact on result
             temp=self.plotdata[case][vname][k,:,:]
             std_sim=ma.std(temp)/stdrefs[name]
             coef=np.corrcoef(temp.compressed(),self.plotdata[self.obsname][vname][k,:,:].compressed())
             cor=coef[0,1]
             tempoutput.append((std_sim,cor))
           self.plotdata[case][vname]=tempoutput
-      if self.plottype=="diff":
-        for case in self.plotlist:
-          print(case)
+        if self.plottype=="diff":
           self.plotdata[case][vname]=self.plotdata[case][vname]-self.plotdata[self.obsname][vname]
 
 
