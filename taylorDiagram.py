@@ -92,7 +92,7 @@ class TaylorDiagram(object):
 
         # Add reference point and stddev contour
         l, = self.ax.plot([0], self.refstd, color='black',marker='o',
-                          ls='', ms=10)
+                          ls='', ms=10,label="OBS")
         t = NP.linspace(0, NP.pi/2.0)
         r = NP.zeros_like(t) + self.refstd
         lines=self.ax.plot(t,r, color='darkgray',ls='--', label='_',zorder=0,lw=0.8)
