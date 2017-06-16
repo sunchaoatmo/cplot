@@ -105,3 +105,4 @@ ENV/
 
 #python pickle data
 *.p
+*.xlsx
