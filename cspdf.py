@@ -14,7 +14,7 @@ def pdfplot(data,vname):
   import seaborn as sns
   import matplotlib.pyplot as plt
   import matplotlib.gridspec as gridspec
-  bin_size=(data.x_max-data.x_min)/(data.n_bin)
+  bin_size=(float(data.x_max)-float(data.x_min))/(float(data.n_bin))
   x_axis=np.arange(data.x_min,data.x_max,bin_size)
   gs1 = gridspec.GridSpec(data.nregs,len(seasonname) )
   gs1.update(wspace=0.0, hspace=0.0)
@@ -53,7 +53,6 @@ def pdfplot(data,vname):
           else:
             linestyle="-"
             linewidth=0.8
-          print(np.sum(data.plotdata["all"][vname][:,ireg,iseason,icase]))
           plotmethod(x_axis,data.plotdata["all"][vname][:,ireg,iseason,icase]*100,linewidth=linewidth, linestyle=linestyle,
                    color=tableau20[2+2*icase],markersize=ms0,label=sim_nicename[case])
         if ireg==0 and iseason==3:
