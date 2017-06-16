@@ -20,7 +20,7 @@ nicev={"T2M":"T2M","CLDFRA":"CLT","CLDFRAl":"CLL","CLDFRAm":"CLM","CLDFRAh":"CLH
 #style = Style(name="PPT",sidenamefs=3,tickfs=5,format="png",Figsize=(2.73,2.9))
 style = Style(name="PPT",sidenamefs=8,tickfs=7,format="png")
 figsizes={4:(8.5,9.0),3:(8.5,5.4)}
-figsizes={5:(8.5,8.6),4:(8.25,7.0),3:(8.5,5.4),2:(8.5,3.4)}
+figsizes={5:(8.5,8.6),4:(8.25,7.0),3:(8.5,4.05),2:(8.5,3.0)}
 axes_bar={4:[0.15, 0.18, 0.7, 0.1],3:[0.15, 0.03, 0.7, 0.1]}
 axes_bar={5:[0.15, 0.04, 0.7, 0.1],4:[0.15, 0.03, 0.7, 0.1],3:[0.15, 0.03, 0.7, 0.1],2:[0.15, 0.02, 0.7, 0.1]}
 
@@ -40,9 +40,14 @@ def seasonalmap(data,vname):
   suptitle="%s (%s)"%(data.title[vname],plotres[vname]['unit'])
   if data.method=="cor":
     suptitle=data.title[vname]
+    clevel=[ 0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+    cmp=plotres[vname]['cmp3']
+    cmp   =plt.get_cmap('jet') ;cmp.set_under('w')
+    """
     clevel=[-1,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,
             0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
     cmp   =plt.get_cmap('bwr') #plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
+    """
   elif data.method=="rmse":
     clevel=getattr(data,"%s_%s"%(vname.lower(),"clevel0"))
     cmp   =plt.get_cmap('YlOrRd') #plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
