@@ -18,6 +18,71 @@ cmap_cs_precp = [ (242, 242, 242),  (178, 223, 238),(154, 192, 205),(68, 176, 21
             (  0,  63,   0), (255, 255,   0),(255, 204, 0) ,   (255, 143,   0),
             (255,   0,   0), (215,   0,   0), 
             (255,   0, 255) ] #, (155,  87, 203)]
+haxby= [ (37,57,175) ,
+(37,68,187) ,
+(38,79,199) ,
+(38,90,211) ,
+(39,101,223) ,
+(39,113,235) ,
+(40,124,247) ,
+(41,134,251) ,
+(43,144,252) ,
+(44,154,253) ,
+(46,164,253) ,
+(47,174,254) ,
+(49,184,255) ,
+(54,193,255) ,
+(62,200,255) ,
+(71,207,255) ,
+(80,214,255) ,
+(89,221,255) ,
+(98,229,255) ,
+(107,235,254) ,
+(112,235,241) ,
+(117,235,228) ,
+(122,235,215) ,
+(127,236,202) ,
+(132,236,189) ,
+(137,236,177) ,
+(147,238,172) ,
+(157,241,171) ,
+(168,244,169) ,
+(178,247,167) ,
+(189,250,165) ,
+(200,253,163) ,
+(208,253,159) ,
+(213,250,152) ,
+(219,247,146) ,
+(224,244,139) ,
+(230,241,133) ,
+(236,238,126) ,
+(240,235,120) ,
+(243,227,115) ,
+(245,220,109) ,
+(248,212,104) ,
+(250,205,98) ,
+(252,197,93) ,
+(255,190,88) ,
+(255,185,84) ,
+(255,181,81) ,
+(255,176,78) ,
+(255,172,75) ,
+(255,167,72) ,
+(255,163,69) ,
+(255,163,74) ,
+(255,167,85) ,
+(255,171,95) ,
+(255,175,105) ,
+(255,179,115) ,
+(255,183,126) ,
+(255,189,139) ,
+(255,200,158) ,
+(255,211,178) ,
+(255,222,197) ,
+(255,233,216) ,
+(255,244,236) ,
+(255,255,255) ] 
+
 BWR=[ ( 36    ,   0 ,    216), 
 (   24    ,  28 ,    247), 
 (   40    ,  87 ,    255), 
@@ -72,6 +137,7 @@ def buildcmp(cmaplist):
       cmaplist[i] = (r / 255., g / 255., b / 255.) 
   return LinearSegmentedColormap.from_list( "precip", cmaplist,N=len(cmaplist)),cmaplist
 cmap_cs_precp,cs_precp_list=buildcmp(cmap_cs_precp)
+cmap_haxby,haxby_list=buildcmp(haxby[::5])
 cmap_BWR,BWR_list=buildcmp(BWR)
 cmap_BWR.set_over('maroon')
 cmap_BWR.set_under('blue')
@@ -89,7 +155,7 @@ sim_nicename={"ERI":"ERI",
              "ERI_run_0":"old CWRF",
              "new_ERI_run_0":"CWRF\nMor",
              "new_ERI_gsfc":"CWRF",
-             "new_ERI_albedo":"Albedo",
+             "new_ERI_albedo":"CWRF",
 #             "new_ERI_gsfc":"CWRF\nGSFC",
              "new_ERI_morr":"Mor",
              "run_00":"CWRF",
@@ -586,9 +652,6 @@ plotres['AT2M97']['convertcoef']=1
 plotres['AT2M97']['valuemask']=True
 plotres['AT2M97']['shift']=-273.15
 
-#plotres['DTR']['cleve0']=[-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7]
-#plotres['DTR']['cleve1']=range(1,20,1)
-#plotres['DTR']['cleve3']=range(10)
 plotres['DTR']['cmp1']=cmap_cs_precp
 cmp   =cmap_BWR
 plotres['DTR']['cmp2']=cmp
@@ -596,3 +659,23 @@ plotres['DTR']['unit']="$^\circ$C"
 plotres['DTR']['convertcoef']=1
 plotres['DTR']['valuemask']=True
 
+plotres['RH']['cmp1']=plt.get_cmap('viridis_r')
+cmp   =cmap_BWR
+plotres['RH']['cmp2']=cmp
+plotres['RH']['unit']="$\%$"
+plotres['RH']['convertcoef']=1
+plotres['RH']['valuemask']=True
+
+plotres['WIN']['cmp1']=cmap_haxby
+cmp   =cmap_BWR
+plotres['WIN']['cmp2']=cmp
+plotres['WIN']['unit']="$m/s$"
+plotres['WIN']['convertcoef']=1
+plotres['WIN']['valuemask']=True
+
+plotres['GUST']['cmp1']=cmap_haxby
+cmp   =cmap_BWR
+plotres['GUST']['cmp2']=cmp
+plotres['GUST']['unit']="$m/s$"
+plotres['GUST']['convertcoef']=1
+plotres['GUST']['valuemask']=True
