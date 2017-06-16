@@ -21,7 +21,7 @@ def hovplot(data,vname):
   years=range(YB,YE+1)
 
   xlat=np.arange(data.start_lat,data.end_lat,data.dlat)
-  clevel=plotres[vname]['cleve1']
+  clevel=getattr(data,"%s_%s"%(vname.lower(),"clevel1"))
   norm = mc.BoundaryNorm(clevel, 256)
   cmp=plotres[vname]['cmp3']
   ncols=2.0 
