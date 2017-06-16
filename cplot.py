@@ -9,20 +9,20 @@ wrfinputfile="%s/wrfinput_d01"%datapath
 landmaskfile="%s/landmask.nc"%datapath
 
 if period=="seasonal":
-  from context import seasonal_data
+  from seasonal import seasonal_data
   cwrfdata=seasonal_data(period,vnames,cases,nlevel,cutpoints,neof,
                  method,plottype,shapefile,datapath,obsname,GCM_name,Time_control,
                  wrfinputfile,landmaskfile,masktype,PLOT)
 elif period=="monthly":
-  from context import monthly_data
+  from monthly import monthly_data
   cwrfdata=monthly_data(period,vnames,cases,nlevel,cutpoints,neof,
-                 method,plottype,shapefile,datapath,obsname,GCM_name,Hovmoller,Time_control,
+                 method,plottype,shapefile,datapath,obsname,GCM_name,Time_control,
                  wrfinputfile,landmaskfile,masktype,PLOT)
 elif period=="daily":
   from context import daily_data
   cwrfdata=daily_data(period,vnames,cases,nlevel,cutpoints,neof,
                  method,plottype,shapefile,datapath,obsname,GCM_name,Time_control,
-                 wrfinputfile,landmaskfile,masktype,Hovmoller,PDF,regmapfile)
+                 wrfinputfile,landmaskfile,masktype,PLOT,Hovmoller,PDF,regmapfile)
 
 cwrfdata.Read()
 cwrfdata.Analysis()
