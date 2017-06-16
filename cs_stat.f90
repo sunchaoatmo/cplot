@@ -129,7 +129,7 @@ module cs_stat
     real,                  intent(in)  :: x_min,x_max
 !   real ,dimension(n_bin,nregs,nperiods,nyears,ncases),intent(out),optional::pdf_yearly
 
-    integer, parameter :: dims = 3
+    integer, parameter :: dims = 4
     integer :: start(dims), count(dims)
     integer :: ncid, varid,dimid
     integer :: index0       ! first day's index of each index
@@ -144,6 +144,7 @@ module cs_stat
     real, dimension(nlon,nlat,nyears)               :: temp_3d
     real ,dimension(n_bin,nregs,nperiods,nyears,ncases)                     ::pdf_yearly
     real, dimension(1)                              :: firstday_obs,firstday ! first day of each dataset
+    integer :: dim_loc
 
     allocate(data_obs(nlon,nlat,ntime))
     allocate(data_sim(nlon,nlat,ntime))
@@ -166,10 +167,23 @@ module cs_stat
       count(1:1) = (/ 1/); start(1:1) = (/ 1/)
       call check( nf90_get_var(ncid, varid, firstday,start, count) )
       index0=beg_nday(1,1)-firstday(1)+1
-      count(1:3) = (/ nlon, nlat, ntime/); start(1:3) = (/ 1, 1, index0 /)
+      ! first read in all the analysis data (all seasons all years) at once
+      call check( nf90_inquire(ncid, nDimensions=dim_loc))
       call check( nf90_inq_varid(ncid, trim(vname), varid) )
-      call check( nf90_get_var(ncid, varid, data_sim,start, count) )
+      if (dim_loc==3) then
+        print*,"old dataset"
+        count(1:3) = (/ nlon, nlat, ntime/); start(1:3) = (/ 1, 1, index0 /)
+        call check( nf90_get_var(ncid, varid, data_sim,start(1:3), count(1:3)) )
+      elseif(dim_loc==4) then
+        print*,"new dataset has an extra dim"
+        count(1:4) = (/ nlon, nlat,1, ntime/); start(1:4) = (/ 1, 1, 1,index0 /)
+        call check( nf90_get_var(ncid, varid, data_sim,start(1:4), count(1:4)) )
+      else
+        stop"dim is incorrect"
+      end if
+
       call check( nf90_close(ncid) )
+      print*,"Okay we got the whole data"
       do iperiod=1,nperiods
         do iyear=1,nyears
 
