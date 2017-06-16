@@ -19,7 +19,7 @@ elif period=="monthly":
                  method,plottype,shapefile,datapath,obsname,GCM_name,Time_control,
                  wrfinputfile,landmaskfile,masktype,PLOT)
 elif period=="daily":
-  from context import daily_data
+  from daily import daily_data
   cwrfdata=daily_data(period,vnames,cases,nlevel,cutpoints,neof,
                  method,plottype,shapefile,datapath,obsname,GCM_name,Time_control,
                  wrfinputfile,landmaskfile,masktype,PLOT,Hovmoller,PDF,regmapfile)
