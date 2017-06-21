@@ -46,22 +46,28 @@ def seasonaltaylor(data,vname):
       morder=-1
       for i,case in  enumerate(data.cases):
         if case!=data.obsname:
-          stddev, corrcoef=data.plotdata[case][vname][iseason]
-          ms=10
-          if case==data.GCM_name:
-            ms=11
-            marker='*'  #ensmDict[name]["marker"]
-            color1='black' #ensmDict[name]["color"]   #ensmDict[name]["color"]
-            color2='black'  #ensmDict[name]["color"]
-          else:
-            morder+= 1  #(i-3)%24 #(int((name.replace("run_",""))))%24
-            marker='$%s$' % chr( ord('a')+i)
-            color1=tableau20[2] 
-          labelname= sim_nicename[case] if case in sim_nicename else case
-          dia.add_sample(stddev, corrcoef,
-                         marker=marker, markersize=ms, ls='',
-                         mfc=color1, mec=color1, # Colors
-                         label=labelname,zorder=zorder)
+#         for ireg in range(data.nregs+1):
+          for ireg in range(1):
+            regname=str("".join(data.regnames[ireg-1]))
+            stddev, corrcoef=data.plotdata[case][vname][ireg,iseason,:]
+            ms=10
+            if case==data.GCM_name:
+              ms=11
+              marker='*'  #ensmDict[name]["marker"]
+            # color1='black' #ensmDict[name]["color"]   #ensmDict[name]["color"]
+            # color2='black'  #ensmDict[name]["color"]
+            else:
+              morder+= 1  #(i-3)%24 #(int((name.replace("run_",""))))%24
+              #marker='$%s$' % chr( ord('a')+i*(data.nregs+1)+ireg)
+              marker='$%s$' % chr( ord('a')+i)
+            color1=tableau20[2*i] if i<10 else 'b'
+            #color1=tableau20[2*ireg] if ireg<10 else 'b'
+            labelname= sim_nicename[case] if case in sim_nicename else case
+            labelname= regname+"  "+labelname if ireg >0 else labelname
+            dia.add_sample(stddev, corrcoef,
+                           marker=marker, markersize=ms, ls='',
+                           mfc=color1, mec=color1, # Colors
+                           label=labelname,zorder=zorder)
   
       # Add RMS contours, and label them
       contours = dia.add_contours(levels=5,  colors='0.5') # 5 levels
@@ -75,7 +81,7 @@ def seasonaltaylor(data,vname):
   # http://matplotlib.sourceforge.net/users/legend_guide.html
   fig.legend(dia.samplePoints,
              [ p.get_label() for p in dia.samplePoints ],
-             numpoints=1, prop=dict(size=13),loc='center')
+             numpoints=1, prop=dict(size=6),loc='center')
   plt.savefig(vname+"_"+data.plotname+".png", dpi=500)
 
 def combinedtaylor(data):
@@ -149,18 +155,25 @@ def combinedtaylor(data):
 def writedata(data,vname):
   import pandas as pd
   outputlist=[case for case in data.cases if case!=data.obsname]
-  outputlist_nicename=[sim_nicename[case] for case in data.cases if case!=data.obsname]
-  outputstd=np.zeros((len(outputlist),len(seasonname)))
-  outputcor=np.zeros((len(outputlist),len(seasonname)))
-  for icase,case in  enumerate(outputlist):
-    for iseason, season in enumerate(seasonname):
-      zorder=1
-      stddev, corrcoef=data.plotdata[case][vname][iseason]
-      outputstd[icase,iseason]=stddev
-      outputcor[icase,iseason]=corrcoef
-  dfstd = pd.DataFrame(outputstd, index=outputlist_nicename,columns=seasonname)
-  dfcor = pd.DataFrame(outputcor, index=outputlist_nicename,columns=seasonname)
   writer = pd.ExcelWriter('Std-Cor_'+vname+'.xlsx')
-  dfstd.to_excel(writer,'std.')
-  dfcor.to_excel(writer,'cor.')
+  outputstd=np.zeros((len(outputlist)*(data.nregs+1),len(seasonname)))
+  outputcor=np.zeros((len(outputlist)*(data.nregs+1),len(seasonname)))
+  for iseason, season in enumerate(seasonname):
+    idex=0
+    for icase,case in  enumerate(outputlist):
+      for ireg in range(data.nregs+1):
+        stddev, corrcoef=data.plotdata[case][vname][ireg,iseason,:]
+        outputstd[idex,iseason]=stddev
+        outputcor[idex,iseason]=corrcoef
+        idex+=1
+
+  outputindex=[]
+  for icase,case in  enumerate(outputlist):
+    for ireg in range(data.nregs+1):
+      regname=str("".join(data.regnames[ireg-1])) if ireg>0 else "whole"
+      outputindex.append(sim_nicename[case]+":"+regname)
+  dfstd = pd.DataFrame(outputstd, index=outputindex,columns=seasonname)
+  dfcor = pd.DataFrame(outputcor, index=outputindex,columns=seasonname)
+  dfstd.to_excel(writer,'std')
+  dfcor.to_excel(writer,'cor')
   writer.save()

@@ -33,7 +33,7 @@ class field(object):
 class reginalmetfield(field):
   def __init__(self,period,vnames,cases,nlevel,cutpoints,neof,
                method,plottype,shapefile,datapath,obsname,GCM_name,Time_control,
-               wrfinputfile,landmaskfile,masktype,PLOT,maskval=0,regmapfile=None):
+               wrfinputfile,landmaskfile,masktype,PLOT,maskval=0.,regmapfile=None):
     from netCDF4 import Dataset
     import numpy as np
     import numpy.ma as ma
@@ -169,16 +169,19 @@ class reginalmetfield(field):
 
       for casenumber,case in enumerate(self.plotlist):
         if "Taylor" in self.plottype:
-          stdrefs={}
-          samples={}
-          tempoutput=[]
+          tempoutput=np.zeros((self.nregs+1,len(seasonname),2))
           for k,name in enumerate(seasonname):
-            stdrefs[name]=ma.std(self.plotdata[self.obsname][vname][k,:,:]) #whether or not compressed has no impact on result
+            stdrefs=ma.std(self.plotdata[self.obsname][vname][k,:,:]) #whether or not compressed has no impact on result
             temp=self.plotdata[case][vname][k,:,:]
-            std_sim=ma.std(temp)/stdrefs[name]
+            std_sim=ma.std(temp)/stdrefs
             coef=np.corrcoef(temp.compressed(),self.plotdata[self.obsname][vname][k,:,:].compressed())
-            cor=coef[0,1]
-            tempoutput.append((std_sim,cor))
+            tempoutput[0,k,:]=(std_sim,coef[0,1])
+            for ireg in range(1,1+self.nregs):
+              stdrefs=ma.std(self.plotdata[self.obsname][vname][k,self.regmap==ireg]) #whether or not compressed has no impact on result
+              temp=self.plotdata[case][vname][k,self.regmap==ireg]
+              std_sim=ma.std(temp)/stdrefs
+              coef=np.corrcoef(temp.compressed(),self.plotdata[self.obsname][vname][k,self.regmap==ireg].compressed())
+              tempoutput[ireg,k,:]=(std_sim,coef[0,1])
           self.plotdata[case][vname]=tempoutput
         if self.plottype=="diff":
           self.plotdata[case][vname]=self.plotdata[case][vname]-self.plotdata[self.obsname][vname]
