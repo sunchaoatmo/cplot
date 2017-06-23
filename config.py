@@ -39,8 +39,16 @@ def readini():
     PLOT[option]=config.get(section,option)
     PLOT[option]=[float(x.strip()) for x in PLOT[option].split(',')]
 
+  section="Taylor"
+  Taylor={}
+  for option in config.options(section):
+    Taylor[option]=config.get(section,option)
+    if "," in Taylor[option]:
+      Taylor[option]=[x.strip() for x in Taylor[option].split(',')]
+
+
   Time_control={}
   section="Time_control"
   for option in config.options(section):
     Time_control[option]=config.getint(section, option)
-  return (period,vnames,cases,nlevel,datapath,cutpoints,neof,masktype,method,plottype,shapefile,obsname,GCM_name,Hovmoller,Time_control,PDF,PLOT,regmapfile)
+  return (period,vnames,cases,nlevel,datapath,cutpoints,neof,masktype,method,plottype,shapefile,obsname,GCM_name,Hovmoller,Time_control,PDF,PLOT,Taylor,regmapfile)
