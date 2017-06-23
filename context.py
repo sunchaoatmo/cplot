@@ -165,8 +165,14 @@ class reginalmetfield(field):
     from constant import seasonname
     import cs_stat
     import sys
+    def taylorcalculator(obs,sim):
+      stdrefs=ma.std(obs) #whether or not compressed has no impact on result
+      std_sim=ma.std(sim)/stdrefs
+      coef=np.corrcoef(sim,obs)
+      return (std_sim,coef[0,1])
+
     for vname in self.vnames:
-      for case in self.plotlist:
+      for case in self.cases:
         if self.method=="eof":
           from eofs.standard import eof
           self.plotdata[case][vname]=[]
@@ -192,27 +198,17 @@ class reginalmetfield(field):
           self.plotdata[case][vname]=ma.masked_array((self.plotdata[case][vname]), mask=mask_b)
 
 
-      for casenumber,case in enumerate(self.plotlist):
+
+      for case in self.plotlist:
         if "Taylor" in self.plottype:
           tempoutput=np.zeros((int(self.nregs)+1,len(seasonname),2))
           for k,name in enumerate(seasonname):
-            stdrefs=ma.std(self.plotdata[self.obsname][vname][k,:,:]) #whether or not compressed has no impact on result
-            temp=self.plotdata[case][vname][k,:,:]
-            std_sim=ma.std(temp)/stdrefs
-            coef=np.corrcoef(temp.compressed(),self.plotdata[self.obsname][vname][k,:,:].compressed())
-            tempoutput[0,k,:]=(std_sim,coef[0,1])
+            tempoutput[0,k,:]=taylorcalculator(self.plotdata[self.obsname][vname][k,:,:].compressed(),
+                                               self.plotdata[case][vname][k,:,:].compressed())
             for ireg in range(1,1+int(self.nregs)):
-#             stdrefs=ma.std(self.plotdata[self.obsname][vname][k,self.regmap==ireg]) #whether or not compressed has no impact on result
-#             temp=self.plotdata[case][vname][k,self.regmap==ireg]
-              stdrefs=ma.std(self.plotdata[self.obsname][vname][k,self.lon>105]) #whether or not compressed has no impact on result
-              temp=self.plotdata[case][vname][k,self.lon>105]
-              std_sim=ma.std(temp)/stdrefs
-#             coef=np.corrcoef(temp.compressed(),self.plotdata[self.obsname][vname][k,self.regmap==ireg].compressed())
-              coef=np.corrcoef(temp.compressed(),self.plotdata[self.obsname][vname][k,self.lon>105].compressed())
-              tempoutput[ireg,k,:]=(std_sim,coef[0,1])
+              tempoutput[ireg,k,:]=taylorcalculator(self.plotdata[self.obsname][vname][k,self.regmap==ireg].compressed(),
+                                                    self.plotdata[case][vname][k,self.regmap==ireg].compressed())
           self.plotdata[case][vname]=tempoutput
-#       if self.plottype=="diff":
-#         self.plotdata[case][vname]=self.plotdata[case][vname]-self.plotdata[self.obsname][vname]
 
   def Plot(self):
     if self.plottype=="contour": # or self.plottype=="diff": 
