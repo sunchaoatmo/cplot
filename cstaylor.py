@@ -35,6 +35,8 @@ def seasonaltaylor(data,vname):
   mpl.rcParams['font.family'] = "sans-serif"
   mpl.rcParams['font.sans-serif'] = "Arial"
   mpl.rcParams['xtick.labelsize'] = "xx-large"
+  suptitle="Taylor diagram:%s"%(sim_nicename.get(vname,vname))
+  fig.suptitle(suptitle, fontsize=12, fontweight='bold')
   zorder=1
   
   stdrefs=1
@@ -46,8 +48,8 @@ def seasonaltaylor(data,vname):
       morder=-1
       for i,case in  enumerate(data.cases):
         if case!=data.obsname:
-#         for ireg in range(data.nregs+1):
-          for ireg in range(1):
+          for ireg in range(int(data.nregs)+1):
+#         for ireg in range(1):
             regname=str("".join(data.regnames[ireg-1]))
             stddev, corrcoef=data.plotdata[case][vname][ireg,iseason,:]
             ms=10
@@ -60,6 +62,7 @@ def seasonaltaylor(data,vname):
               morder+= 1  #(i-3)%24 #(int((name.replace("run_",""))))%24
               #marker='$%s$' % chr( ord('a')+i*(data.nregs+1)+ireg)
               marker='$%s$' % chr( ord('a')+i)
+              marker='$%s$' % "C"
             color1=tableau20[2*i] if i<10 else 'b'
             #color1=tableau20[2*ireg] if ireg<10 else 'b'
             labelname= sim_nicename[case] if case in sim_nicename else case
@@ -111,57 +114,63 @@ def combinedtaylor(data):
   colorseason={"DJF":tableau20[18],"MAM":tableau20[5],"JJA":tableau20[6],"SON":tableau20[8]}
   #colorseason={"DJF":"blue","MAM":"green","JJA":"red","SON":"purple"}
   dia ={} 
-  for ivname,vname in enumerate(data.vnames):
-    dia[vname] = td.TaylorDiagram(stdrefs, fig=fig, rect=rects[vname] ,
-                          label='Obs')
-    ph=[]
-    for i,case in  enumerate(data.cases):
-      for iseason, season in enumerate(seasonname):
-        zorder=1
-        if case!=data.obsname:
-          stddev, corrcoef=data.plotdata[case][vname][iseason]
-          if case==data.GCM_name:
-            ms=8
-            marker="^"
-          elif "RegCM" in case:
-            marker="s"
-            ms =8
-          else:
-            ms=12
-            zorder=100
-            marker="*"
-          color1=colorseason[season]
-          labelname=season if i==3 else " "
-          ph.append(dia[vname].add_sample(stddev, corrcoef,
-                       marker=marker, markersize=ms, ls='',
-                       mfc=color1, mec=color1, # Colors
-                         label=labelname,zorder=zorder))
+  for ireg in range(int(data.nregs)+1):
+    for ivname,vname in enumerate(data.vnames):
+      dia[vname] = td.TaylorDiagram(stdrefs, fig=fig, rect=rects[vname] ,
+                            label='Obs')
+      ph=[]
+      for i,case in  enumerate(data.cases):
+        for iseason, season in enumerate(seasonname):
+          zorder=1
+          if case!=data.obsname:
+            stddev, corrcoef=data.plotdata[case][vname][ireg,iseason,:]
+            #stddev, corrcoef=data.plotdata[case][vname][iseason]
+            if case==data.GCM_name:
+              ms=8
+              marker="^"
+            elif "RegCM" in case:
+              marker="s"
+              ms =8
+            else:
+              ms=12
+              zorder=100
+              marker="*"
+            color1=colorseason[season]
+            labelname=season if i==3 else " "
+            ph.append(dia[vname].add_sample(stddev, corrcoef,
+                         marker=marker, markersize=ms, ls='',
+                         mfc=color1, mec=color1, # Colors
+                           label=labelname,zorder=zorder))
 
-    
-        contours = dia[vname].add_contours(levels=5,  colors='0.5') # 5 levels
-        dia[vname].ax.clabel(contours, inline=1, fontsize=5, fmt='%.1f')
-        dia[vname]._ax.set_ylabel("Normalized STD",fontsize=12,  fontweight='bold')
-        plt.text(0.85, 0.03, sim_nicename.get(vname,vname),transform = dia[vname]._ax.transAxes,zorder=1000,fontsize=12)
-    
-  leg=dia[data.vnames[1]]._ax.legend( ph, [ p.get_label() for p in ph], 
-             frameon=True, mode="expand",fancybox=True, framealpha=1,numpoints=1, 
-             loc="upper right",bbox_to_anchor=(0.6, 0.95,0.4,0.2), ncol=3)
-  plt.setp(leg.texts, family="monospace")
-             #frameon=True, mode=None,fancybox=True, framealpha=1,numpoints=1, loc="upper right",bbox_to_anchor=(1.25, 1.3), ncol=3)
-  leg.set_title("ERI   CWRF   RegCM4", prop = {'size':10})
+      
+          contours = dia[vname].add_contours(levels=5,  colors='0.5') # 5 levels
+          dia[vname].ax.clabel(contours, inline=1, fontsize=5, fmt='%.1f')
+          dia[vname]._ax.set_ylabel("Normalized STD",fontsize=12,  fontweight='bold')
+          plt.text(0.85, 0.03, sim_nicename.get(vname,vname),transform = dia[vname]._ax.transAxes,zorder=1000,fontsize=12)
+      
+    leg=dia[data.vnames[1]]._ax.legend( ph, [ p.get_label() for p in ph], 
+               frameon=True, mode="expand",fancybox=True, framealpha=1,numpoints=1, 
+               loc="upper right",bbox_to_anchor=(0.6, 0.95,0.4,0.2), ncol=2)
+               #loc="upper right",bbox_to_anchor=(0.6, 0.95,0.4,0.2), ncol=3)
+    plt.setp(leg.texts, family="monospace")
+               #frameon=True, mode=None,fancybox=True, framealpha=1,numpoints=1, loc="upper right",bbox_to_anchor=(1.25, 1.3), ncol=3)
+    #leg.set_title("ERI   CWRF   RegCM4", prop = {'size':10})
+    leg.set_title("ERI   CWRF ", prop = {'size':10})
 # plt.show()
-  plt.savefig(vname+"_"+data.plotname+".pdf")
+    regname=str("".join(data.regnames[ireg-1]))
+    regname= regname if ireg >0 else "all"
+    plt.savefig("Taylor_%s_%s.pdf"%(data.plotname,regname))
 
 def writedata(data,vname):
   import pandas as pd
   outputlist=[case for case in data.cases if case!=data.obsname]
   writer = pd.ExcelWriter('Std-Cor_'+vname+'.xlsx')
-  outputstd=np.zeros((len(outputlist)*(data.nregs+1),len(seasonname)))
-  outputcor=np.zeros((len(outputlist)*(data.nregs+1),len(seasonname)))
+  outputstd=np.zeros((len(outputlist)*(int(data.nregs)+1),len(seasonname)))
+  outputcor=np.zeros((len(outputlist)*(int(data.nregs)+1),len(seasonname)))
   for iseason, season in enumerate(seasonname):
     idex=0
     for icase,case in  enumerate(outputlist):
-      for ireg in range(data.nregs+1):
+      for ireg in range(int(data.nregs)+1):
         stddev, corrcoef=data.plotdata[case][vname][ireg,iseason,:]
         outputstd[idex,iseason]=stddev
         outputcor[idex,iseason]=corrcoef
@@ -169,7 +178,7 @@ def writedata(data,vname):
 
   outputindex=[]
   for icase,case in  enumerate(outputlist):
-    for ireg in range(data.nregs+1):
+    for ireg in range(int(data.nregs)+1):
       regname=str("".join(data.regnames[ireg-1])) if ireg>0 else "whole"
       outputindex.append(sim_nicename[case]+":"+regname)
   dfstd = pd.DataFrame(outputstd, index=outputindex,columns=seasonname)
