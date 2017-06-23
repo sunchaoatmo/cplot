@@ -936,6 +936,14 @@ end subroutine
           end if
         end do
       end do
+    elseif (trim(methodname)=="diff") then
+      do j=1,ny
+        do i=1,nx
+          if (mask(i,j)==maskval) then
+            output(i,j)=sum(sim(:,i,j)-obs(:,i,j))/nt
+          end if
+        end do
+      end do
     elseif (trim(methodname)=="trend") then
       do k=1,nt
        x(k)=k
