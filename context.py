@@ -23,7 +23,7 @@ class field(object):
     self.shapefile=shapefile
     self.datapath=datapath
     self.obsname =obsname
-    if method=="cor" or method=="rmse" or plottype=="diff" or "Taylor" in plottype:
+    if method=="cor" or method=="rmse" or method=="diff" or "Taylor" in plottype:
       self.plotlist.remove(self.obsname)
     self.GCM_name =GCM_name
 
@@ -33,7 +33,7 @@ class field(object):
 class reginalmetfield(field):
   def __init__(self,period,vnames,cases,nlevel,cutpoints,neof,
                method,plottype,shapefile,datapath,obsname,GCM_name,Time_control,
-               wrfinputfile,landmaskfile,masktype,PLOT,maskval=0.,regmapfile=None):
+               wrfinputfile,landmaskfile,masktype,PLOT,Taylor,maskval=0.,regmapfile=None):
     from netCDF4 import Dataset
     import numpy as np
     import numpy.ma as ma
@@ -59,6 +59,9 @@ class reginalmetfield(field):
     for key in PLOT:
         setattr(self,key,PLOT[key])
 
+    for key in Taylor:
+        setattr(self,key,Taylor[key])
+
     for key,keyname in process_dict.iteritems():
        if keyname=="reg_mask":
          filenc=regmapnc
@@ -77,9 +80,8 @@ class reginalmetfield(field):
     self.terrain =ma.masked_array(self.terrain,mask=self.mask)
 
 
-    if regmapfile:
-      self.regnames=regmapnc.variables['regname']
-      self.nregs  =np.max(self.regmap)
+#   if regmapfile:
+#     self.regnames=regmapnc.variables['regname']
 
   def d2p(outputdict,fnc):
     # watach out the dict is altered in this fun!!!
@@ -136,15 +138,37 @@ class reginalmetfield(field):
 
 
   def Analysis(self):
+    if self.tltype=="spatial":
+      self.spatialanalysis()
+    elif self.tltype=="temporal":
+      self.temporalanalysis()
+
+  def temporalanalysis(self):
     import numpy as np
     import numpy.ma as ma
     from constant import seasonname
     import cs_stat
     import sys
     for vname in self.vnames:
-      for case in self.cases:
+      for case in self.plotlist:
+        self.plotdata[case][vname]= np.zeros((int(self.nregs)+1,4,self.ye-self.yb+1,2))
+        self.plotdata[case][vname]= cs_stat.cs_stat.ananual_temp(
+                                             sim=self.data[case][vname],
+                                             obs=self.data[self.obsname][vname],
+                                             mask=self.mask,
+                                             maskval=self.maskval  ,regmap=self.regmap,nregs=int(self.nregs))
+
+
+  def spatialanalysis(self):
+    import numpy as np
+    import numpy.ma as ma
+    from constant import seasonname
+    import cs_stat
+    import sys
+    for vname in self.vnames:
+      for case in self.plotlist:
         if self.method=="eof":
-          from eofs.standard import Eof
+          from eofs.standard import eof
           self.plotdata[case][vname]=[]
           for k,name in enumerate(seasonname):
             temp   =self.data[case][vname][:,k,:,:]
@@ -157,7 +181,8 @@ class reginalmetfield(field):
         else: #if self.method=="cor" or self.method=="rmse" or self.method=="trend" or self.method=="mean":
           self.plotdata[case][vname]= np.zeros((4,self.nlat,self.nlon))
           for k,name in enumerate(seasonname):
-            self.plotdata[case][vname][k,:,:]= cs_stat.cs_stat.ananual_ana(
+            #self.plotdata[case][vname][k,:,:]= cs_stat.cs_stat.ananual_ana(
+            self.plotdata[case][vname][k]= cs_stat.cs_stat.ananual_ana(
                                                sim=self.data[case][vname][:,k,:,:],
                                                obs=self.data[self.obsname][vname][:,k,:,:],
                                                mask=self.mask,
@@ -169,25 +194,28 @@ class reginalmetfield(field):
 
       for casenumber,case in enumerate(self.plotlist):
         if "Taylor" in self.plottype:
-          tempoutput=np.zeros((self.nregs+1,len(seasonname),2))
+          tempoutput=np.zeros((int(self.nregs)+1,len(seasonname),2))
           for k,name in enumerate(seasonname):
             stdrefs=ma.std(self.plotdata[self.obsname][vname][k,:,:]) #whether or not compressed has no impact on result
             temp=self.plotdata[case][vname][k,:,:]
             std_sim=ma.std(temp)/stdrefs
             coef=np.corrcoef(temp.compressed(),self.plotdata[self.obsname][vname][k,:,:].compressed())
             tempoutput[0,k,:]=(std_sim,coef[0,1])
-            for ireg in range(1,1+self.nregs):
-              stdrefs=ma.std(self.plotdata[self.obsname][vname][k,self.regmap==ireg]) #whether or not compressed has no impact on result
-              temp=self.plotdata[case][vname][k,self.regmap==ireg]
+            for ireg in range(1,1+int(self.nregs)):
+#             stdrefs=ma.std(self.plotdata[self.obsname][vname][k,self.regmap==ireg]) #whether or not compressed has no impact on result
+#             temp=self.plotdata[case][vname][k,self.regmap==ireg]
+              stdrefs=ma.std(self.plotdata[self.obsname][vname][k,self.lon>105]) #whether or not compressed has no impact on result
+              temp=self.plotdata[case][vname][k,self.lon>105]
               std_sim=ma.std(temp)/stdrefs
-              coef=np.corrcoef(temp.compressed(),self.plotdata[self.obsname][vname][k,self.regmap==ireg].compressed())
+#             coef=np.corrcoef(temp.compressed(),self.plotdata[self.obsname][vname][k,self.regmap==ireg].compressed())
+              coef=np.corrcoef(temp.compressed(),self.plotdata[self.obsname][vname][k,self.lon>105].compressed())
               tempoutput[ireg,k,:]=(std_sim,coef[0,1])
           self.plotdata[case][vname]=tempoutput
-        if self.plottype=="diff":
-          self.plotdata[case][vname]=self.plotdata[case][vname]-self.plotdata[self.obsname][vname]
+#       if self.plottype=="diff":
+#         self.plotdata[case][vname]=self.plotdata[case][vname]-self.plotdata[self.obsname][vname]
 
   def Plot(self):
-    if self.plottype=="contour" or self.plottype=="diff": 
+    if self.plottype=="contour": # or self.plottype=="diff": 
       if self.method=="eof":
         from cseof import eofplot
         for vname in self.vnames:
