@@ -32,25 +32,28 @@ def seasonalmap(data,vname):
   landmask =data.mask
   shapefile=data.shapefile
   ncols=len(plotList) if len(plotList)<5 else 5
-  if data.method=="diff":
+  if data.method=="diff" or data.method=="Xcor":
     pdfmax=getattr(data,"%s_%s"%(vname.lower(),"pdfmax"))[0]
     try:
-      clevelpdf=getattr(data,"%s_%s"%(vname.lower(),"clevel2"))
+      clevelpdf=getattr(data,"%s_%s"%(vname.lower(),"clevel2"))[:]
     except:
-      clevelpdf=getattr(data,"%s_%s"%(vname.lower(),"clevel0"))
+      clevelpdf=getattr(data,"%s_%s"%(vname.lower(),"clevel0"))[:]
+
+    clevelpdf.insert(  len(clevelpdf)/2,0.0)
     ncols+=1
     gs0 = gridspec.GridSpec(ncols,len(seasonname) )
     #gs0.update(hspace=0.25, wspace=0.1)
     gs0.update(hspace=0.20, wspace=0.0)
   fig = plt.figure(figsize=figsizes[ncols])
-  contourfilename=plotname+"_"+vname
+  contourfilename=plotname+"_"+"".join(vname)
   extend="both"
-  suptitle="%s (%s)"%(sim_nicename.get(vname,vname),plotres[vname]['unit'])
-  if data.method=="cor":
+  if "cor" in data.method:
     suptitle=data.title[vname]
-    clevel=[ 0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
-    cmp=plotres[vname]['cmp3']
-    cmp   =plt.get_cmap('jet') ;cmp.set_under('w')
+    clevel=[ -1,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+    #clevel=[ 0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+    #cmp   =cmap_haxby  ;cmp.set_under('w')
+    extend="neither"
+    cmp   =cmap_hotcold18 #plt.get_cmap('seismic') #;cmp.set_under('b')
   elif data.method=="rmse":
     clevel=getattr(data,"%s_%s"%(vname.lower(),"clevel0"))
     cmp   =plt.get_cmap('YlOrRd') #plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('b')
@@ -62,6 +65,7 @@ def seasonalmap(data,vname):
     clevel2=[x*2 for x in range(-10,11)]
     clevel.remove(0)
   else:
+    suptitle="%s (%s)"%(sim_nicename.get(vname,vname),plotres[vname]['unit'])
     extend="max"
     clevel=getattr(data,"%s_%s"%(vname.lower(),"clevel1"))
     cmp=plotres[vname]['cmp1']
@@ -79,7 +83,7 @@ def seasonalmap(data,vname):
   fig.suptitle(suptitle, fontsize=12, fontweight='bold')
 ###################################### Plot PDF ########################################
   figurenum=0
-  if data.method=="diff":
+  if data.method=="diff" or data.method=="Xcor":
     for k,name in enumerate(seasonname):
       import seaborn.apionly as sns
       ax1 = plt.subplot(gs0[figurenum])
@@ -112,7 +116,7 @@ def seasonalmap(data,vname):
           ax1.text((clevelpdf[1]+clevelpdf[0])*0.5, y, int(y*100),fontsize=6,
           verticalalignment='center', horizontalalignment='left',
           rotation="vertical")
-      plt.axvline(0, color='grey',lw=0.2)
+      plt.axvline(0, color='black',lw=0.8,ls=":")
       plt.xticks(clevelpdf[1:-1], (int(x) for x in clevelpdf[1:-1]))
       plt.tick_params(axis='both', which='major', labelsize=6)
       for axis in ['top','bottom','left','right']:
@@ -148,7 +152,7 @@ def seasonalmap(data,vname):
       cbar.set_ticks(clevel)
       clevel_label=[]
       for x in clevel:
-        if x.is_integer():
+        if float(x).is_integer():
           clevel_label.append(int(x))
         else:
           clevel_label.append(x)
@@ -161,7 +165,10 @@ def seasonalmap(data,vname):
         fig.savefig(figurename,format=style.format,dpi=300) #,dpi=300)
       fig.suptitle(suptitle, fontsize=12, fontweight='bold')
       figurenum=0
-      fig = plt.figure(figsize=figsizes[ncols])
+      #fig = plt.figure(figsize=figsizes[ncols])
+      fig.clf()
 #   gs1.update(wspace=0., hspace=0.0)
   if style.format=="pdf":
     pp.close()
+  plt.close()
+  print("finished %s plotting "%contourfilename)

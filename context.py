@@ -1,8 +1,8 @@
 class field(object):
   def __init__(self,period,vnames,cases,nlevel,neof,
                method,plottype,shapefile,datapath,obsname,GCM_name,Time_control):
+    from itertools import combinations
     self.period=period
-    self.vnames=vnames
     self.cases =cases
     self.plotlist =cases[:]
     for key in Time_control:
@@ -17,13 +17,19 @@ class field(object):
     self.plotdata=defaultdict(dict)
     self.plotname="%s-%s-%s-%s"%(self.yb,self.ye,method,self.period)
     self.title   ={}
-    for vname in vnames:
-      self.title[vname]="%s %s %s-%s"%(vname,method if method!="mean" else "",self.yb,self.ye)
+    self.vnames=vnames
+    if "X" in method:
+      self.xvnames=[combined for combined in combinations(vnames, 2)] 
+      for vname in self.xvnames:
+        self.title[vname]="%s vs %s cor %s-%s"%(vname[0],vname[1],self.yb,self.ye)
+    else:
+      for vname in vnames:
+        self.title[vname]="%s %s %s-%s"%(vname,method if method!="mean" else "",self.yb,self.ye)
     self.plottype=plottype
     self.shapefile=shapefile
     self.datapath=datapath
     self.obsname =obsname
-    if method=="cor" or method=="rmse" or method=="diff" or "Taylor" in plottype:
+    if "cor"==method or method=="rmse" or method=="diff" or "Taylor" in plottype:
       self.plotlist.remove(self.obsname)
     self.GCM_name =GCM_name
 
@@ -138,10 +144,38 @@ class reginalmetfield(field):
 
 
   def Analysis(self):
+    if "X" in self.method:
+      self.Xanalysis()
+    else:
+      self.Ianalysis()
+
+  def Ianalysis(self):
     if self.tltype=="spatial":
       self.spatialanalysis()
     elif self.tltype=="temporal":
       self.temporalanalysis()
+
+  def Xanalysis(self):
+    import numpy as np
+    from constant import seasonname
+    import cs_stat
+    import numpy.ma as ma
+    for case in self.cases:
+      for vname in self.xvnames:
+        self.plotdata[case][vname]= np.zeros((4,self.nlat,self.nlon))
+        for k,name in enumerate(seasonname):
+          self.plotdata[case][vname][k]= cs_stat.cs_stat.xananual_ana(
+                                             sim1=self.data[case][vname[0]][:,k,:,:],
+                                             obs1=self.data[self.obsname][vname[0]][:,k,:,:],
+                                             sim2=self.data[case][vname[1]][:,k,:,:],
+                                             obs2=self.data[self.obsname][vname[1]][:,k,:,:],
+                                             mask=self.mask,
+                                             methodname=self.method ,
+                                             maskval=self.maskval  )
+        _, mask_b = np.broadcast_arrays(self.plotdata[case][vname], self.mask[None,...])
+        self.plotdata[case][vname]=ma.masked_array((self.plotdata[case][vname]), mask=mask_b)
+
+
 
   def temporalanalysis(self):
     import numpy as np
@@ -212,13 +246,12 @@ class reginalmetfield(field):
 
   def Plot(self):
     if self.plottype=="contour": # or self.plottype=="diff": 
-      if self.method=="eof":
-        from cseof import eofplot
-        for vname in self.vnames:
+      for vname in getattr(self,"xvnames",self.vnames):
+        if self.method=="eof":
+          from cseof import eofplot
           eofplot(self,vname)
-      else:
-        from cscontour import seasonalmap
-        for vname in self.vnames:
+        else:
+          from cscontour import seasonalmap
           seasonalmap(self,vname)
     elif self.plottype=="Taylor": 
       from cstaylor import seasonaltaylor

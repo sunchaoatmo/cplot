@@ -899,6 +899,46 @@ end subroutine
     end do
   end subroutine mean_2d
 
+  subroutine xananual_ana(obs1,sim1,obs2,sim2,mask,methodname,maskval,nt,nx,ny,output)
+    integer,intent(in)               ::nt,nx,ny
+    real,intent(in),dimension(nt,nx,ny)::obs1,obs2
+    real,intent(in),dimension(nt,nx,ny)::sim1,sim2
+    real,intent(in),dimension(nx,ny)::mask
+    character (5),intent(in)   ::methodname
+    real,intent(out),dimension(nx,ny)::output
+    real,intent(in)                 ::maskval
+    !local 
+    real,dimension(nt)::x,sig
+    real,dimension(nt)::bias1,bias2
+    real::a,b,siga,sigb,chi2,q
+    integer :: mwt,i,j,k
+    logical :: printted
+    if (trim(methodname)=="Xcor") then
+      do j=1,ny
+        do i=1,nx
+          if (mask(i,j)==maskval) then
+            output(i,j)=corrcoef_1d(sim1(:,i,j),sim2(:,i,j),nt)
+          end if
+        end do
+      end do
+    elseif (trim(methodname)=="Xcorbias") then
+      do j=1,ny
+        do i=1,nx
+          if (mask(i,j)==maskval) then
+            bias1=sim1(:,i,j)-obs1(:,i,j)
+            bias2=sim2(:,i,j)-obs2(:,i,j)
+            output(i,j)=corrcoef_1d(bias1,bias2,nt)
+          end if
+        end do
+      end do
+    else
+      print*,"not a valide method name for X analysis, you choose:",methodname
+      stop
+    endif
+  end subroutine xananual_ana
+
+
+
   subroutine ananual_ana(obs,sim,mask,methodname,maskval,nt,nx,ny,output)
     integer,intent(in)               ::nt,nx,ny
     real,intent(in),dimension(nt,nx,ny)::obs
