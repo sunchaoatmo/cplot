@@ -30,14 +30,22 @@ def corplot(data,vname):
   fig = plt.figure()
   gs0 = gridspec.GridSpec(1,1 )
   ax1 = plt.subplot(gs0[0])
+  import numpy as np
+  print(np.corrcoef(data.plotdata["RegCM"][vname],data.plotdata["ERI"][vname]))
+  print(np.corrcoef(data.plotdata["new_ERI_albedo"][vname],data.plotdata["ERI"][vname]))
   for casenumber,case in enumerate(data.plotlist):
     #units_cur=data.time[case][vname].units
     #calendar_cur=data.time[case][vname].calendar
     legname = sim_nicename.get(case,case)
     color1=tableau20[2*(casenumber)] 
-    plt.plot(data.plotdata[case][vname],label=legname,color=color1,lw=0.8)
+    plt.plot(data.plotdata[case][vname][:150],label=legname,color=color1,lw=0.8)
+    print(np.argmin(data.plotdata[case][vname][:150]))
     leg=ax1.legend(loc=1,borderaxespad=0.,frameon=False, fontsize=6)
-  plt.ylim([0,1.0])
+
+  for imonth in range(150):
+    print("month=%s,cwrf=%s,regcm=%s"%(imonth,data.plotdata["new_ERI_albedo"][vname][imonth],data.plotdata["RegCM"][vname][imonth]))
+  plt.ylim([0.8,1.0])
+  plt.xlim([0.,150])
   
   if outputformat=="pdf":
     pp.savefig()
