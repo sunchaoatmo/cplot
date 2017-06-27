@@ -556,7 +556,6 @@ plotres['PrMAX']['violion']=True
 #plotres['PRAVG']['cleve1']=[0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5,6,7,8,9,10,11,12,13,14]
 #plotres['PRAVG']['cleve3']=range(10)
 plotres['PRAVG']['cmp1']=cmap_cs_precp
-plotres['PRAVG']['cmp2']='RdBu_r'
 cmp   =plt.get_cmap('Spectral_r');cmp.set_over('maroon');cmp.set_under('w')
 plotres['PRAVG']['cmp3']=cmap_haxby #plt.get_cmap('jet')
 plotres['PRAVG']['unit']="mm/day"
