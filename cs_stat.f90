@@ -904,7 +904,7 @@ end subroutine
     real,intent(in),dimension(nt,nx,ny)::obs1,obs2
     real,intent(in),dimension(nt,nx,ny)::sim1,sim2
     real,intent(in),dimension(nx,ny)::mask
-    character (5),intent(in)   ::methodname
+    character (10),intent(in)   ::methodname
     real,intent(out),dimension(nx,ny)::output
     real,intent(in)                 ::maskval
     !local 
@@ -936,6 +936,34 @@ end subroutine
       stop
     endif
   end subroutine xananual_ana
+
+  subroutine Tananual_ana(obs,sim,mask,methodname,maskval,ny,nx,nyears,nmonths,output)
+    integer,intent(in)               ::ny,nx,nyears,nmonths
+    real,intent(in),dimension(nyears,nmonths,nx,ny)::obs
+    real,intent(in),dimension(nyears,nmonths,nx,ny)::sim
+    real,intent(in),dimension(nx,ny)::mask
+    real,intent(in)                 ::maskval
+    character (10),intent(in)   ::methodname
+    real,intent(out),dimension(nyears*nmonths)::output
+    !local 
+    integer :: t,m,y
+    logical :: printted
+    t=1
+    if (trim(methodname)=="Tcor") then
+      do y=1,nyears
+       do m=1,nmonths
+        call corrcoef_2d(sim(y,m,:,:),obs(y,m,:,:),nx,ny,mask,maskval, output(t))
+        t=t+1
+       end do
+      end do
+    else
+      print*,"not a valide method name for X analysis, you choose:",methodname
+      stop
+    endif
+  end subroutine Tananual_ana
+
+
+
 
 
 
@@ -1035,17 +1063,26 @@ end subroutine
 
 
 
-  subroutine corrcoef_2d(obs,sim,nt,nx,ny,cor)
-    integer,intent(in)               ::nt,nx,ny
-    real,intent(in),dimension(nt,nx,ny)::obs,sim
-    real,intent(out),dimension(nx,ny)::cor
+  subroutine corrcoef_2d(obs,sim,nx,ny,mask,maskval,cor)
+    integer,intent(in)               ::nx,ny
+    real,intent(in),dimension(nx,ny)::obs,sim
+    real,intent(in)                 ::maskval
+    real,intent(in),dimension(nx,ny)::mask
+    real,intent(out)                ::cor
     !local 
-    integer :: i,j,k
+    real,dimension(nx*ny)::obs_masked,sim_masked
+    integer :: i,j,npoints
+    npoints=1
     do j=1,ny
       do i=1,nx
-        cor(i,j)=corrcoef_1d(obs(:,i,j),sim(:,i,j),nt)
+        if (mask(i,j)==maskval) then
+          obs_masked(npoints)=obs(i,j)
+          sim_masked(npoints)=sim(i,j)
+          npoints=npoints+1
+        end if
       end do
     end do
+    cor=corrcoef_1d(obs_masked(1:npoints),sim_masked(1:npoints),npoints)
   end subroutine corrcoef_2d
 
   subroutine rmse_2d(obs,sim,nt,nx,ny,rmse)

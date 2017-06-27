@@ -29,7 +29,7 @@ class field(object):
     self.shapefile=shapefile
     self.datapath=datapath
     self.obsname =obsname
-    if "cor"==method or method=="rmse" or method=="diff" or "Taylor" in plottype:
+    if "cor"==method or "Tcor"==method or method=="rmse" or method=="diff" or "Taylor" in plottype:
       self.plotlist.remove(self.obsname)
     self.GCM_name =GCM_name
 
@@ -122,7 +122,11 @@ class reginalmetfield(field):
     import sys
     for case in self.cases:
       for vname in self.vnames:
-        filename="%s/%s_%s_%s.nc"%(self.datapath,case,vname,self.period)
+        if vname not in ["PRAVG","PCT","CDD","RAINYDAYS","R10"]: 
+          filename="%s/%s_%s_%s.nc"%(self.datapath,case,vname,self.period)
+        else:
+          filename="%s/%s_%s_%s.nc"%(self.datapath,case,"PR",self.period)
+
         try:
           fnc     =Dataset(filename,"r")
         except:
