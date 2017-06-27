@@ -1,56 +1,51 @@
 class field(object):
-  def __init__(self,period,vnames,cases,nlevel,neof,
-               method,plottype,shapefile,datapath,obsname,GCM_name,Time_control):
+  def __init__(self,settings):
     from itertools import combinations
-    self.period=period
-    self.cases =cases
-    self.plotlist =cases[:]
-    for key in Time_control:
-       setattr(self,key,Time_control[key])
-    self.neof  =neof
-    self.nlevel  =nlevel
-    self.method  =method
     from collections import defaultdict
+    for section,items in settings.iteritems():
+      for key,value in items.iteritems():
+       setattr(self,key,value)
+    self.wrfinputfile="%s/wrfinput_d01"%self.datapath
+    self.landmaskfile="%s/landmask.nc"%self.datapath
+
+      
+    self.plotlist =self.cases[:]
     self.data    =defaultdict(dict)
     self.filename=defaultdict(dict)
     self.time    =defaultdict(dict)
     self.plotdata=defaultdict(dict)
-    self.plotname="%s-%s-%s-%s"%(self.yb,self.ye,method,self.period)
+    self.plotname="%s-%s-%s-%s"%(self.yb,self.ye,self.method,self.period)
     self.title   ={}
-    self.vnames=vnames
-    if "X" in method:
-      self.xvnames=[combined for combined in combinations(vnames, 2)] 
+    if "X" in self.method:
+      self.xvnames=[combined for combined in combinations(self.vnames, 2)] 
       for vname in self.xvnames:
         self.title[vname]="%s vs %s cor %s-%s"%(vname[0],vname[1],self.yb,self.ye)
     else:
-      for vname in vnames:
-        self.title[vname]="%s %s %s-%s"%(vname,method if method!="mean" else "",self.yb,self.ye)
-    self.plottype=plottype
-    self.shapefile=shapefile
-    self.datapath=datapath
-    self.obsname =obsname
-    if "cor"==method or "Tcor"==method or method=="rmse" or method=="diff" or "Taylor" in plottype:
+      for vname in self.vnames:
+        self.title[vname]="%s %s %s-%s"%(vname,self.method if self.method!="mean" else "",self.yb,self.ye)
+    if "cor"==self.method or "Tcor"==self.method or self.method=="rmse" or self.method=="diff" or "Taylor" in self.plottype:
       self.plotlist.remove(self.obsname)
-    self.GCM_name =GCM_name
 
   def Output(self):
     pass
 
 class reginalmetfield(field):
-  def __init__(self,period,vnames,cases,nlevel,cutpoints,neof,
-               method,plottype,shapefile,datapath,obsname,GCM_name,Time_control,
-               wrfinputfile,landmaskfile,masktype,PLOT,Taylor,maskval=0.,regmapfile=None):
+  def __init__(self,setting):
     from netCDF4 import Dataset
     import numpy as np
     import numpy.ma as ma
 
+    field.__init__(self,setting)
+
+    """
     field.__init__(self,period,vnames,cases,nlevel,neof,
                method,plottype,shapefile,datapath,obsname,GCM_name,Time_control)
+    """
 
-    wrfinput    =Dataset(wrfinputfile)
-    lm          =Dataset(landmaskfile)
-    if regmapfile:
-      regmapnc    =Dataset(regmapfile)
+    wrfinput    =Dataset(self.wrfinputfile)
+    lm          =Dataset(self.landmaskfile)
+    if self.regmapfile:
+      regmapnc    =Dataset(self.regmapfile)
       process_dict ={"mask":"LANDMASK","lat":'CLAT',"lon":'CLONG',"terrain":"HGT","regmap":"reg_mask"}
     else:
       process_dict ={"mask":"LANDMASK","lat":'CLAT',"lon":'CLONG',"terrain":"HGT"}
@@ -58,15 +53,7 @@ class reginalmetfield(field):
     self.truelat2=wrfinput.TRUELAT2
     self.cen_lat=wrfinput.CEN_LAT
     self.cen_lon=wrfinput.CEN_LON
-    self.cutpoints=cutpoints
-    self.maskval=maskval
-    self.masktype=masktype
-
-    for key in PLOT:
-        setattr(self,key,PLOT[key])
-
-    for key in Taylor:
-        setattr(self,key,Taylor[key])
+    cutpoints=[int(x) for x in self.cutpoints]
 
     for key,keyname in process_dict.iteritems():
        if keyname=="reg_mask":
@@ -76,22 +63,17 @@ class reginalmetfield(field):
          filenc=wrfinput
          setattr(self,key,filenc.variables[keyname][0,cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]])
     self.nlat,self.nlon=self.lat.shape
+    self.mask=lm.variables["landmask"][cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]]*self.mask
 
-    self.mask= (np.logical_and(lm.variables["landmask"][cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]],
-                self.mask ))
-
-    if masktype==-1:
+    if self.masktype==-1:
       self.mask= np.logical_not(self.mask)
 
     self.terrain =ma.masked_array(self.terrain,mask=self.mask)
 
 
-#   if regmapfile:
-#     self.regnames=regmapnc.variables['regname']
-
   def d2p(outputdict,fnc):
     # watach out the dict is altered in this fun!!!
-    # This function will convert the data from daily axis to [year, ipeiod, i,j] setting, so the ipeiod can be season or monthly
+    # This function will convert the data from daily axis to [year, ipeiod, i,j] settings, so the ipeiod can be season or monthly
     from datetime import datetime
     from netCDF4 import date2num
     m2s     ={12:0,3:1,6:2,9:3}
@@ -126,6 +108,7 @@ class reginalmetfield(field):
           filename="%s/%s_%s_%s.nc"%(self.datapath,case,vname,self.period)
         else:
           filename="%s/%s_%s_%s.nc"%(self.datapath,case,"PR",self.period)
+        print(filename)
 
         try:
           fnc     =Dataset(filename,"r")
@@ -133,12 +116,12 @@ class reginalmetfield(field):
           sys.exit("there is no %s"%filename)
         YB=int(fnc.variables["time"][ 0])
         dimsize=fnc.variables[vname].shape
+
         if len(dimsize)==5:
           self.data[case][vname]=fnc.variables[vname][self.yb-YB:self.ye-YB,:,self.nlevel,self.cutpoints[0]:-self.cutpoints[1],self.cutpoints[2]:-self.cutpoints[3]]
         elif len(dimsize)==4:
           self.data[case][vname]=fnc.variables[vname][self.yb-YB:self.ye-YB,:,self.cutpoints[0]:-self.cutpoints[1],self.cutpoints[2]:-self.cutpoints[3]]
         elif len(dimsize)==3:
-          print("I am here")
           d2p(self.data[case][vname],fnc.variables[vname])
         else:
           sys.exit("dimen size incorrect")
@@ -225,7 +208,6 @@ class reginalmetfield(field):
         else: #if self.method=="cor" or self.method=="rmse" or self.method=="trend" or self.method=="mean":
           self.plotdata[case][vname]= np.zeros((4,self.nlat,self.nlon))
           for k,name in enumerate(seasonname):
-            #self.plotdata[case][vname][k,:,:]= cs_stat.cs_stat.ananual_ana(
             self.plotdata[case][vname][k]= cs_stat.cs_stat.ananual_ana(
                                                sim=self.data[case][vname][:,k,:,:],
                                                obs=self.data[self.obsname][vname][:,k,:,:],
