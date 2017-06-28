@@ -49,14 +49,22 @@ class monthly_data(reginalmetfield):
     import numpy.ma as ma
     for case in self.plotlist:
       for vname in self.vnames:
-        self.plotdata[case][vname]=np.zeros((self.ye-self.yb+1))
-        self.plotdata[case][vname]=cs_stat.cs_stat.tananual_ana(
+        self.plotdata[case][vname]=[]
+        for ireg in range(int(self.nregs)):
+          cor,ets=cs_stat.cs_stat.tananual_ana(
                                              sim=self.data[case][vname],
                                              obs=self.data[self.obsname][vname],
-                                             mask=self.mask,
-                                             maskval=self.maskval,   
+                                             crts=self.crts_level,
+                                             mask=self.regmap,
+                                             maskval=ireg+1,
+                                             #mask=self.mask,
+                                             #maskval=self.maskval,   
                                              methodname=self.method
                                              )
+          if self.method=="ets":
+            self.plotdata[case][vname].append(ets)
+          else:  #not a good practice to catch all
+            self.plotdata[case][vname].append(cor)
 
   def Plot(self):
     if self.plottype=="timeserial":
@@ -65,6 +73,11 @@ class monthly_data(reginalmetfield):
       reginalmetfield.plot(self)
 
   def Tplot(self):
-    from cstimeserial import corplot
-    for vname in self.vnames:
-      corplot(self,vname)
+    if self.method=="Tcor":
+      from cstimeserial import corplot
+      for vname in self.vnames:
+        corplot(self,vname)
+    elif self.method=="ets":
+      from csets import etscontourf
+      for vname in self.vnames:
+        etscontourf(self,vname)
