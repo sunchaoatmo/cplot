@@ -46,17 +46,15 @@ def seasonalmap(data,vname):
   landmask =data.mask
   shapefile=data.shapefile
   ncols=len(plotList) if len(plotList)<5 else 5
-  if  data.method=="Xcor":
-    pdfmax=10.
-    clevelpdf= [ -1,-0.8,-0.6,-0.4,-0.2,0.0,0.2,0.4,0.6,0.8,1]
-  if data.method=="diff":
-    try:
-      clevelpdf=getattr(data,"%s_%s"%(vname.lower(),"clevel2"))[:]
-    except:
-      clevelpdf=getattr(data,"%s_%s"%(vname.lower(),"clevel0"))[:]
-    clevelpdf.insert(  len(clevelpdf)/2,0.0)
-
-  if data.method=="diff" or data.method=="Xcor":
+  if data.contourmappdf:
+    if  "cor"in data.method:
+      clevelpdf= [ -0.9,-0.6,-0.3,0.0,0.3,0.6,0.9]
+    else:
+      try:
+        clevelpdf=getattr(data,"%s_%s"%(vname.lower(),"clevel2"))[:]
+      except:
+        clevelpdf=getattr(data,"%s_%s"%(vname.lower(),"clevel0"))[:]
+      clevelpdf.insert(  len(clevelpdf)/2,0.0)
     ncols+=1
     gs0 = gridspec.GridSpec(ncols,len(seasonname) )
     gs0.update(hspace=0.23, wspace=0.0)
@@ -65,10 +63,11 @@ def seasonalmap(data,vname):
   extend="both"
   if "cor" in data.method:
     suptitle=data.title[vname]
-    clevel=[ -1,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+    #clevel=[ -1,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+    clevel=[ -0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
     #clevel=[ 0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
     #cmp   =cmap_haxby  ;cmp.set_under('w')
-    extend="neither"
+    #extend="neither"
     cmp   =cmap_hotcold18 #plt.get_cmap('seismic') #;cmp.set_under('b')
   elif data.method=="rmse":
     clevel=getattr(data,"%s_%s"%(vname.lower(),"clevel0"))
@@ -99,33 +98,30 @@ def seasonalmap(data,vname):
   fig.suptitle(suptitle, fontsize=12, fontweight='bold')
 ###################################### Plot PDF ########################################
   figurenum=0
-  if data.method=="diff" or data.method=="Xcor":
+  if data.contourmappdf:
     import seaborn.apionly as sns
     pdfmax=0.0
     for k,name in enumerate(seasonname):
       ax1 = plt.subplot(gs0[figurenum])
       for casenumber,case in enumerate(plotList):
         legname = sim_nicename.get(case,case)
-        color1=tableau20[2*(casenumber-1)] 
+        color1=data.casecolors[case]  #tableau20[2*(casenumber-1)] 
         #cshistplot(data.plotdata[case][vname][k,:,:].compressed(),ax=ax1,lw=0.2,label=legname,color=color1,shade=True)
         sns.kdeplot(data.plotdata[case][vname][k,:,:].compressed(),lw=0.2,label=legname,color=color1,shade=True)
-      plt.tick_params(
-        which='both',      # both major and minor ticks are affected
-        right='off',         # ticks along the top edge are off
-        bottom='on',         # ticks along the top edge are off
-        left='on',         # ticks along the top edge are off
-        top='off',         # ticks along the top edge are off
-        length=2
-        ) 
       pdfmax=ax1.get_ylim()[1] if ax1.get_ylim()[1]>pdfmax else pdfmax
       figurenum+=1
+    if hasattr(data,"%s_pdfmax"%vname.lower()):
+      pdfmax=getattr(data,"%s_pdfmax"%vname.lower())
     figurenum=0
     from math import ceil 
+    from matplotlib.ticker import AutoMinorLocator,NullFormatter,MultipleLocator, FormatStrFormatter
+    minorLocator = AutoMinorLocator() #MultipleLocator(5)
     for k,name in enumerate(seasonname):
       ax1 = plt.subplot(gs0[figurenum])
       tickloc=np.linspace(0,pdfmax,num=8) #[x for x  in range(0,int(pdfmax),int(pdfmax)/5)]
       tickloc=[x for x  in range(0,int(ceil(pdfmax)))]
       ax1.set_yticks(tickloc)
+      ax1.yaxis.set_minor_locator(minorLocator)
 
       plt.yticks(ax1.get_yticks(),"")
       if k!=0:
@@ -141,7 +137,7 @@ def seasonalmap(data,vname):
            transform=ax1.transAxes,rotation="vertical")
         """
         for y in ax1.get_yticks()[1:]:
-          ax1.text((clevelpdf[1]+clevelpdf[0])*0.5, y, y,fontsize=6,
+          ax1.text((clevelpdf[1]*0.1+clevelpdf[0]*0.9), y, y,fontsize=6,
           verticalalignment='center', horizontalalignment='left') #,
           #rotation="vertical")
       plt.axvline(0, color='black',lw=0.8,ls=":")
@@ -149,6 +145,23 @@ def seasonalmap(data,vname):
       plt.tick_params(axis='both', which='major', labelsize=6)
       for axis in ['top','bottom','left','right']:
         ax1.spines[axis].set_linewidth(0.01)
+      plt.tick_params(
+        which='major',      # both major and minor ticks are affected
+        right='off',         # ticks along the top edge are off
+        bottom='on',         # ticks along the top edge are off
+        left='on',         # ticks along the top edge are off
+        top='off',         # ticks along the top edge are off
+        length=2
+        ) 
+      plt.tick_params(
+        which='minor',      # both major and minor ticks are affected
+        right='off',         # ticks along the top edge are off
+        bottom='off',         # ticks along the top edge are off
+        left='on',         # ticks along the top edge are off
+        top='off',         # ticks along the top edge are off
+        length=1
+        ) 
+
       plt.ylim([0,float(pdfmax)])
       plt.xlim([clevelpdf[0],clevelpdf[-1]])
       figurenum+=1
