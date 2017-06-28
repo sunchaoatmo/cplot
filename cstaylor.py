@@ -53,7 +53,7 @@ def seasonaltaylor(data,vname):
             regname=str("".join(data.regnames[ireg-1]))
             stddev, corrcoef=data.plotdata[case][vname][ireg,iseason,:]
             ms=10
-            if case==data.GCM_name:
+            if case==data.gcm_name:
               ms=11
               marker='*'  #ensmDict[name]["marker"]
             # color1='black' #ensmDict[name]["color"]   #ensmDict[name]["color"]
@@ -61,11 +61,10 @@ def seasonaltaylor(data,vname):
             else:
               morder+= 1  #(i-3)%24 #(int((name.replace("run_",""))))%24
               #marker='$%s$' % chr( ord('a')+i*(data.nregs+1)+ireg)
-              marker='$%s$' % chr( ord('a')+i)
-              marker='$%s$' % "C"
             color1=tableau20[2*i] if i<10 else 'b'
             #color1=tableau20[2*ireg] if ireg<10 else 'b'
             labelname= sim_nicename[case] if case in sim_nicename else case
+            marker='$%s$' % labelname[0]
             labelname= regname+"  "+labelname if ireg >0 else labelname
             dia.add_sample(stddev, corrcoef,
                            marker=marker, markersize=ms, ls='',
@@ -125,7 +124,7 @@ def combinedtaylor(data):
           if case!=data.obsname:
             stddev, corrcoef=data.plotdata[case][vname][ireg,iseason,:]
             #stddev, corrcoef=data.plotdata[case][vname][iseason]
-            if case==data.GCM_name:
+            if case==data.gcm_name:
               ms=8
               marker="^"
             elif "RegCM" in case:
