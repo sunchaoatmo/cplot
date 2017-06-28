@@ -17,6 +17,11 @@ def retrivesetting(config,section,setting):
         setting[option]=float(setting[option])
     elif option.endswith('s'):
       setting[option]=[setting[option]]
+    elif setting[option]=="False":
+      setting[option]=False
+    elif setting[option]=="True":
+      setting[option]=True
+
 
 
 def readini():
@@ -24,7 +29,7 @@ def readini():
   settings=defaultdict(dict)
   config = ConfigParser.ConfigParser()
   config.read('plot.ini')
-  sections=["MAIN","EOF","Parameter","Hovmoller","PDF","PLOT","Taylor","Time_control"]
+  sections=["MAIN","EOF","Parameter","Hovmoller","PDF","PLOT","Taylor","Time_control","ETS"]
   for section in sections:
     retrivesetting(config,section,settings[section])
   return settings
