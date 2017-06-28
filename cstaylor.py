@@ -110,9 +110,10 @@ def combinedtaylor(data):
   
   stdrefs=1
   
-  colorseason={"DJF":tableau20[18],"MAM":tableau20[5],"JJA":tableau20[6],"SON":tableau20[8]}
+  colorseason={"DJF":tableau20[18],"MAM":tableau20[5],"JJA":tableau20[4],"SON":tableau20[8]}
   #colorseason={"DJF":"blue","MAM":"green","JJA":"red","SON":"purple"}
   dia ={} 
+  csetting={1:{'w':0.23,'loc':0},3:{'w':0.4,'loc':1}}
   for ireg in range(int(data.nregs)+1):
     for ivname,vname in enumerate(data.vnames):
       dia[vname] = td.TaylorDiagram(stdrefs, fig=fig, rect=rects[vname] ,
@@ -147,14 +148,14 @@ def combinedtaylor(data):
           dia[vname]._ax.set_ylabel("Normalized STD",fontsize=12,  fontweight='bold')
           plt.text(0.85, 0.03, sim_nicename.get(vname,vname),transform = dia[vname]._ax.transAxes,zorder=1000,fontsize=12)
       
-    leg=dia[data.vnames[1]]._ax.legend( ph, [ p.get_label() for p in ph], 
+    leg=dia[data.vnames[csetting[len(data.vnames)]['loc']]]._ax.legend( ph, [ p.get_label() for p in ph], 
                frameon=True, mode="expand",fancybox=True, framealpha=1,numpoints=1, 
-               loc="upper right",bbox_to_anchor=(0.6, 0.95,0.4,0.2), ncol=2)
+               loc="upper right",bbox_to_anchor=(0.6, 0.95,csetting[len(data.vnames)]['w'],0.2), ncol=3)
                #loc="upper right",bbox_to_anchor=(0.6, 0.95,0.4,0.2), ncol=3)
     plt.setp(leg.texts, family="monospace")
                #frameon=True, mode=None,fancybox=True, framealpha=1,numpoints=1, loc="upper right",bbox_to_anchor=(1.25, 1.3), ncol=3)
-    #leg.set_title("ERI   CWRF   RegCM4", prop = {'size':10})
-    leg.set_title("ERI   CWRF ", prop = {'size':10})
+    leg.set_title("ERI   CWRF   RegCM4", prop = {'size':10})
+    #leg.set_title("ERI   CWRF ", prop = {'size':10})
 # plt.show()
     regname=str("".join(data.regnames[ireg-1]))
     regname= regname if ireg >0 else "all"
