@@ -2,11 +2,13 @@ class field(object):
   def __init__(self,settings):
     from itertools import combinations
     from collections import defaultdict
+    from plotset     import tableau20
     for section,items in settings.iteritems():
       for key,value in items.iteritems():
        setattr(self,key,value)
     self.wrfinputfile="%s/wrfinput_d01"%self.datapath
     self.landmaskfile="%s/landmask.nc"%self.datapath
+    self.casecolors  =dict(zip(self.cases,[tableau20[ic] for ic in self.colors]))
 
       
     self.plotlist =self.cases[:]
@@ -23,7 +25,7 @@ class field(object):
     else:
       for vname in self.vnames:
         self.title[vname]="%s %s %s-%s"%(vname,self.method if self.method!="mean" else "",self.yb,self.ye)
-    if "cor"==self.method or "Tcor"==self.method or self.method=="rmse" or self.method=="diff" or "Taylor" in self.plottype:
+    if "ets"==self.method or "cor"==self.method or "Tcor"==self.method or self.method=="rmse" or self.method=="diff" or "Taylor" in self.plottype:
       self.plotlist.remove(self.obsname)
 
   def Output(self):
@@ -46,7 +48,7 @@ class reginalmetfield(field):
     lm          =Dataset(self.landmaskfile)
     if self.regmapfile:
       regmapnc    =Dataset(self.regmapfile)
-      process_dict ={"mask":"LANDMASK","lat":'CLAT',"lon":'CLONG',"terrain":"HGT","regmap":"reg_mask"}
+      process_dict ={"mask":"LANDMASK","lat":'CLAT',"lon":'CLONG',"terrain":"HGT","regmap":"reg_mask","regnames":"regname"}
     else:
       process_dict ={"mask":"LANDMASK","lat":'CLAT',"lon":'CLONG',"terrain":"HGT"}
     self.truelat1=wrfinput.TRUELAT1
@@ -56,9 +58,12 @@ class reginalmetfield(field):
     cutpoints=[int(x) for x in self.cutpoints]
 
     for key,keyname in process_dict.iteritems():
-       if keyname=="reg_mask":
+       if "reg" in keyname:
          filenc=regmapnc
-         setattr(self,key,filenc.variables[keyname][cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]])
+         try:
+           setattr(self,key,filenc.variables[keyname][cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]])
+         except:
+           setattr(self,key,filenc.variables[keyname])
        else:
          filenc=wrfinput
          setattr(self,key,filenc.variables[keyname][0,cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]])
