@@ -19,10 +19,24 @@ Style = namedtuple('Style', ['name', 'sidenamefs','tickfs','format'])
 nicev={"T2M":"T2M","CLDFRA":"CLT","CLDFRAl":"CLL","CLDFRAm":"CLM","CLDFRAh":"CLH","ASWDNS":"SWd","TCWPC":"TCWPC","Pr":"Pr","ALWDNS":"LWd","ALWUPS":"LWu","TMAX":"T2MAX","TMIN":"T2MIN","PRAVG":"Pr","PCT":"PCT","RAINYDAYS":"RAINYDAYS","CDD":"CDD","AT2M":"AT2M"}
 #style = Style(name="PPT",sidenamefs=3,tickfs=5,format="png",Figsize=(2.73,2.9))
 style = Style(name="PPT",sidenamefs=8,tickfs=7,format="pdf")
-#figsizes={5:(8.5,8.6),4:(8.25,7.0),3:(8.5,5.4),2:(8.5,3.61)}
-figsizes={5:(8.5,8.6),4:(8.25,7.0),3:(8.5,5.4),2:(8.5,3.61)}
+figsizes={5:(8.5,9.0),4:(8.25,7.0),3:(8.5,5.4),2:(8.5,3.61)}
+# US figsizes={5:(8.5,8.7),4:(8.25,7.0),3:(8.5,4.05),2:(8.5,3.61)}
 axes_bar={4:[0.15, 0.18, 0.7, 0.1],3:[0.15, 0.03, 0.7, 0.1]}
 axes_bar={5:[0.15, 0.04, 0.7, 0.1],4:[0.15, 0.03, 0.7, 0.1],3:[0.15, 0.03, 0.7, 0.1],2:[0.15, 0.02, 0.7, 0.1]}
+def cshistplot(sample,ax,lw,label,color,shade,legend=True,**kwargs):
+  import numpy as np
+  hist,bin_edges=np.histogram(sample, bins='fd', range=None)
+  #plt.hist(a, bins='auto')
+  x=(bin_edges[1:]+bin_edges[:-1])*.5
+  y=hist/float(len(sample))*100.0
+  ax.plot(x, y, color=color, label=label,lw=lw, **kwargs)
+  alpha = kwargs.get("alpha", 0.25)
+  if shade:
+    ax.fill_between(x, 1e-12, y, facecolor=color, alpha=alpha)
+
+  # Draw the legend here
+  if legend:
+    ax.legend(loc="best")
 
 def seasonalmap(data,vname):
   plotList =data.plotlist
@@ -32,18 +46,20 @@ def seasonalmap(data,vname):
   landmask =data.mask
   shapefile=data.shapefile
   ncols=len(plotList) if len(plotList)<5 else 5
-  if data.method=="diff" or data.method=="Xcor":
-    pdfmax=getattr(data,"%s_%s"%(vname.lower(),"pdfmax"))[0]
+  if  data.method=="Xcor":
+    pdfmax=10.
+    clevelpdf= [ -1,-0.8,-0.6,-0.4,-0.2,0.0,0.2,0.4,0.6,0.8,1]
+  if data.method=="diff":
     try:
       clevelpdf=getattr(data,"%s_%s"%(vname.lower(),"clevel2"))[:]
     except:
       clevelpdf=getattr(data,"%s_%s"%(vname.lower(),"clevel0"))[:]
-
     clevelpdf.insert(  len(clevelpdf)/2,0.0)
+
+  if data.method=="diff" or data.method=="Xcor":
     ncols+=1
     gs0 = gridspec.GridSpec(ncols,len(seasonname) )
-    #gs0.update(hspace=0.25, wspace=0.1)
-    gs0.update(hspace=0.20, wspace=0.0)
+    gs0.update(hspace=0.23, wspace=0.0)
   fig = plt.figure(figsize=figsizes[ncols])
   contourfilename=plotname+"_"+"".join(vname)
   extend="both"
@@ -84,12 +100,14 @@ def seasonalmap(data,vname):
 ###################################### Plot PDF ########################################
   figurenum=0
   if data.method=="diff" or data.method=="Xcor":
+    import seaborn.apionly as sns
+    pdfmax=0.0
     for k,name in enumerate(seasonname):
-      import seaborn.apionly as sns
       ax1 = plt.subplot(gs0[figurenum])
       for casenumber,case in enumerate(plotList):
         legname = sim_nicename.get(case,case)
-        color1=tableau20[2*casenumber] 
+        color1=tableau20[2*(casenumber-1)] 
+        #cshistplot(data.plotdata[case][vname][k,:,:].compressed(),ax=ax1,lw=0.2,label=legname,color=color1,shade=True)
         sns.kdeplot(data.plotdata[case][vname][k,:,:].compressed(),lw=0.2,label=legname,color=color1,shade=True)
       plt.tick_params(
         which='both',      # both major and minor ticks are affected
@@ -99,8 +117,16 @@ def seasonalmap(data,vname):
         top='off',         # ticks along the top edge are off
         length=2
         ) 
-      tickloc=[x*0.01 for x  in range(0,int(pdfmax),int(pdfmax)/5)]
-      plt.yticks(tickloc)
+      pdfmax=ax1.get_ylim()[1] if ax1.get_ylim()[1]>pdfmax else pdfmax
+      figurenum+=1
+    figurenum=0
+    from math import ceil 
+    for k,name in enumerate(seasonname):
+      ax1 = plt.subplot(gs0[figurenum])
+      tickloc=np.linspace(0,pdfmax,num=8) #[x for x  in range(0,int(pdfmax),int(pdfmax)/5)]
+      tickloc=[x for x  in range(0,int(ceil(pdfmax)))]
+      ax1.set_yticks(tickloc)
+
       plt.yticks(ax1.get_yticks(),"")
       if k!=0:
         ax1.get_legend().set_visible(False)
@@ -109,19 +135,21 @@ def seasonalmap(data,vname):
         for legobj in leg.legendHandles:
               legobj.set_linewidth(1.0)
         #plt.yticks(ax1.get_yticks(), (int(x) for x in ax1.get_yticks() * 100))
+        """
         ax1.text(0.1, 0.15, 'Frequency ($\%$)',fontsize=8,
            verticalalignment='bottom', horizontalalignment='left',
            transform=ax1.transAxes,rotation="vertical")
+        """
         for y in ax1.get_yticks()[1:]:
-          ax1.text((clevelpdf[1]+clevelpdf[0])*0.5, y, int(y*100),fontsize=6,
-          verticalalignment='center', horizontalalignment='left',
-          rotation="vertical")
+          ax1.text((clevelpdf[1]+clevelpdf[0])*0.5, y, y,fontsize=6,
+          verticalalignment='center', horizontalalignment='left') #,
+          #rotation="vertical")
       plt.axvline(0, color='black',lw=0.8,ls=":")
-      plt.xticks(clevelpdf[1:-1], (int(x) for x in clevelpdf[1:-1]))
+      plt.xticks(clevelpdf[1:-1], (x for x in clevelpdf[1:-1]))
       plt.tick_params(axis='both', which='major', labelsize=6)
       for axis in ['top','bottom','left','right']:
         ax1.spines[axis].set_linewidth(0.01)
-      plt.ylim([0,float(pdfmax)*0.01])
+      plt.ylim([0,float(pdfmax)])
       plt.xlim([clevelpdf[0],clevelpdf[-1]])
       figurenum+=1
 
@@ -167,7 +195,6 @@ def seasonalmap(data,vname):
       figurenum=0
       #fig = plt.figure(figsize=figsizes[ncols])
       fig.clf()
-#   gs1.update(wspace=0., hspace=0.0)
   if style.format=="pdf":
     pp.close()
   plt.close()
