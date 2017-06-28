@@ -937,22 +937,83 @@ end subroutine
     endif
   end subroutine xananual_ana
 
-  subroutine Tananual_ana(obs,sim,mask,methodname,maskval,ny,nx,nyears,nmonths,output)
-    integer,intent(in)               ::ny,nx,nyears,nmonths
+  subroutine etscalculator(obs,sim,crt,ets,nx,ny,mask,maskval)
+    implicit none
+    integer,intent(in)               ::nx,ny
+    real,intent(in),dimension(nx,ny)::obs,sim
+    real,intent(in)                 ::maskval
+    real,intent(in),dimension(nx,ny)::mask
+    real,intent(in)                 ::crt 
+    real,intent(out)                ::ets
+    !local 
+    integer :: i,j,npoints
+    real    :: a,b,c,d,ar
+    npoints=0
+    a=0.0
+    b=0.0
+    c=0.0
+    d=0.0
+    ets=0.0
+    do j=1,ny
+      do i=1,nx
+        if (mask(i,j)==maskval) then
+          npoints=npoints+1
+          if(obs(i,j)>=crt.and.sim(i,j)>=crt)then
+            a=a+1
+          elseif(obs(i,j)<crt.and.sim(i,j)>=crt)then
+            b=b+1
+          elseif(obs(i,j)>=crt.and.sim(i,j)<crt)then
+            c=c+1
+          elseif(obs(i,j)<crt.and.sim(i,j)<crt)then
+            d=d+1
+          endif
+        end if
+      end do
+    end do
+    if (npoints>0) then
+      ar=(a+b)*(a+c)/npoints
+    else
+      ar=0.0
+    end if
+    if(abs(a+b+c-ar).gt.0.001)then
+      ets=(a-ar) /(a+b+c-ar)
+    endif
+    if (ets<0.0) then
+      ets=0.0
+    end if
+
+
+  end subroutine etscalculator
+
+
+  subroutine Tananual_ana(obs,sim,mask,methodname,maskval,crts,ny,nx,nyears,nmonths,ncrt,cor,ets)
+    implicit none
+    integer,intent(in)               ::ny,nx,nyears,nmonths,ncrt
     real,intent(in),dimension(nyears,nmonths,nx,ny)::obs
     real,intent(in),dimension(nyears,nmonths,nx,ny)::sim
     real,intent(in),dimension(nx,ny)::mask
+    real,intent(in),dimension(ncrt) ::crts
     real,intent(in)                 ::maskval
     character (10),intent(in)   ::methodname
-    real,intent(out),dimension(nyears*nmonths)::output
+    real,intent(out),dimension(nyears*nmonths),optional::cor
+    real,intent(out),dimension(ncrt,nyears*nmonths),optional::ets
     !local 
-    integer :: t,m,y
+    integer :: t,m,y,icrt
     logical :: printted
     t=1
     if (trim(methodname)=="Tcor") then
       do y=1,nyears
        do m=1,nmonths
-        call corrcoef_2d(sim(y,m,:,:),obs(y,m,:,:),nx,ny,mask,maskval, output(t))
+        call corrcoef_2d(sim(y,m,:,:),obs(y,m,:,:),nx,ny,mask,maskval, cor(t))
+        t=t+1
+       end do
+      end do
+    elseif (trim(methodname)=="ets") then
+      do y=1,nyears
+       do m=1,nmonths
+         do icrt=1,ncrt
+          call etscalculator(obs(y,m,:,:),sim(y,m,:,:),crts(icrt),ets(icrt,t),nx,ny,mask,maskval)
+         enddo
         t=t+1
        end do
       end do
