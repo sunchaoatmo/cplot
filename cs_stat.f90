@@ -9,6 +9,7 @@ module cs_stat
 
   subroutine Clim_Hovm_daily(filename,vname,timeindex,data_hovm,  &
                              clat,clon,xlat,xlon_lb,xlon_ub,      &
+                             cutpoints,                           &
                              mask,maskval,                        &
                              dlat,ncell,nday,nyear,nlon,nlat,ntime)
 
@@ -21,6 +22,7 @@ module cs_stat
     integer, intent(in) :: nday,nyear,ncell
     real               ,dimension(nlat,nlon)      ,intent(in) ::mask      ! WATCH OUT! the variables from python is C-order!
     integer,               intent(in)  :: maskval
+    integer,dimension(4),  intent(in)  :: cutpoints
     integer,dimension(nyear,nday),intent(in) ::timeindex 
     real,dimension(ncell),intent(in) ::xlat 
     real,                 intent(in) ::xlon_lb 
@@ -29,6 +31,8 @@ module cs_stat
     real                             ::xlat_lb 
     real                             ::xlat_ub 
     integer                          ::numpoint 
+    integer, parameter :: dims = 4
+    integer :: start(dims), count(dims)
     real, dimension(nlat,nlon) ,intent(in )         :: clat
     real, dimension(nlat,nlon) ,intent(in )         :: clon
     real, dimension(ncell,nday),intent(out)         :: data_hovm
@@ -43,7 +47,9 @@ module cs_stat
     print*,"Reading and anlysis daily:"//trim(filename)
     call check( nf90_open(FILENAME, NF90_NOWRITE, ncid) )
     call check( nf90_inq_varid(ncid, vname, varid) )
-    call check( nf90_get_var(ncid, varid, data_raw) )
+    count(1:3) = (/ nlon, nlat, ntime/); 
+    start(1:3) = (/ 1+cutpoints(3)   , 1+cutpoints(1),   1/)
+    call check( nf90_get_var(ncid, varid, data_raw,start, count) )
     call check( nf90_close(ncid) )
     data_temp=0.0
     data_hovm=0.0
@@ -94,29 +100,34 @@ module cs_stat
                          filename,obsfilename,          &
                          filenamelen,                   &
                          nlat,nlon,nregs,               &
+                         cutpoints,                     &
                          ntime,nperiods,nyears,ncases,  &
                          beg_nday,end_nday,             &
                          mask,maskval,nlandpoints,      &
                          regmap,                        &
                          n_bin,x_min,x_max,             &
-                         pdf)  !,pdf_yearly)
+                         ncrt,crts,                     &
+                         pdf,ets_output)  !,pdf_yearly)
     use netcdf
 
     implicit none
     integer      ,intent(in)   ::ana_yearly  ! whether we will output yearly pdf analysis
     integer      ,intent(in)   ::filenamelen
     character (4),intent(in)   ::methodname
+    integer,dimension(4),  intent(in)  :: cutpoints
     character (len = *), intent(in):: vname 
     character (len =filenamelen),                  intent(in):: obsfilename
     character (len =filenamelen),dimension(ncases-1)           :: filename
 !   character (len = *)                  ,intent(in):: filename
     integer,intent(in) :: nregs    ! total number of regs  we are gonna analysis
+    integer,intent(in) :: ncrt     ! total number of crts
     integer,intent(in) :: nlon,nlat
     integer,intent(in) :: ntime ! Pay attention, here ntime is how many time slice actually used in this calculation, 
                                 ! not the whole array
     integer,intent(in) :: nperiods ! it can be monthly 12 or seasonal 4
     integer,intent(in) :: nyears   ! total number of years we are gonna analysis
     integer,intent(in) :: ncases   ! total number of cases we are gonna analysis
+    real               ,dimension(ncrt),intent(in)            ::crts
     integer            ,dimension(nperiods,nyears),intent(in) ::beg_nday  ! we assume there is nperiods each one has ndays 
     !beg_nday is the number of days since 0001-01-01 00:00 of each period's first day and end_nday is the last day 
     integer            ,dimension(nperiods,nyears),intent(in) ::end_nday  ! we assume there is nperiods each one has ndays 
@@ -124,6 +135,7 @@ module cs_stat
     integer,               intent(in)  :: maskval
     integer,intent(in) :: nlandpoints
     real ,dimension(n_bin,nregs,nperiods,ncases),intent(out)                ::pdf
+    real ,dimension(ncrt,nlat,nlon,nperiods,ncases),intent(out)             ::ets_output
     real               ,dimension(nlat,nlon)      ,intent(in) ::regmap    ! WATCH OUT! the variables from python is C-order!
     integer,               intent(in)  :: n_bin
     real,                  intent(in)  :: x_min,x_max
@@ -145,9 +157,14 @@ module cs_stat
     real ,dimension(n_bin,nregs,nperiods,nyears,ncases)                     ::pdf_yearly
     real, dimension(1)                              :: firstday_obs,firstday ! first day of each dataset
     integer :: dim_loc
+    integer :: beg_cur,icrt,it,lastindex_s 
+    integer, dimension(ntime):: tindex_sim,tindex_obs
 
+    print*,"nlon=",nlon,"nlat=",nlat
+    print*,"cutpoints=",cutpoints
     allocate(data_obs(nlon,nlat,ntime))
     allocate(data_sim(nlon,nlat,ntime))
+    ets_output(:,:,:,:,:)=0.0
 
     ! read in obs
 
@@ -156,7 +173,10 @@ module cs_stat
     count(1:1) = (/ 1/); start(1:1) = (/ 1/)
     call check( nf90_get_var(ncid, varid, firstday_obs,start, count) )
     index0=beg_nday(1,1)-firstday_obs(1)+1
-    count(1:3) = (/ nlon, nlat, ntime/); start(1:3) = (/ 1, 1, index0 /)
+    print*,"obs starting from:",index0
+    !count(1:3) = (/ nlon, nlat, ntime/); start(1:3) = (/ 1, 1, index0 /)
+    start(1:3) = (/ 1+cutpoints(3)   , 1+cutpoints(1),   index0/)
+    count(1:3) = (/ nlon, nlat, ntime/); 
     call check( nf90_inq_varid(ncid, trim(vname), varid) )
     call check( nf90_get_var(ncid, varid, data_obs,start, count) )
     call check( nf90_close(ncid) )
@@ -171,12 +191,19 @@ module cs_stat
       call check( nf90_inquire(ncid, nDimensions=dim_loc))
       call check( nf90_inq_varid(ncid, trim(vname), varid) )
       if (dim_loc==3) then
-        print*,"old dataset"
-        count(1:3) = (/ nlon, nlat, ntime/); start(1:3) = (/ 1, 1, index0 /)
+        print*,"old dataset,starting index:",index0
+        !count(1:3) = (/ nlon, nlat, ntime/); start(1:3) = (/ 1, 1, index0 /)
+        start(1:3) = (/ 1+cutpoints(3)   , 1+cutpoints(1),   index0/)
+        count(1:3) = (/ nlon, nlat, ntime/); 
         call check( nf90_get_var(ncid, varid, data_sim,start(1:3), count(1:3)) )
       elseif(dim_loc==4) then
-        print*,"new dataset has an extra dim"
-        count(1:4) = (/ nlon, nlat,1, ntime/); start(1:4) = (/ 1, 1, 1,index0 /)
+        start(1:4) = (/ 1+cutpoints(3)   , 1+cutpoints(1),    1,index0/)
+        count(1:4) = (/ nlon, nlat, 1,ntime/); 
+        print*,"new dataset has an extra dim,starting from index",index0
+        print*,count
+        print*,start
+        print*,beg_nday(1,1)
+        print*,firstday(1)
         call check( nf90_get_var(ncid, varid, data_sim,start(1:4), count(1:4)) )
       else
         stop"dim is incorrect"
@@ -184,49 +211,87 @@ module cs_stat
 
       call check( nf90_close(ncid) )
       print*,"Okay we got the whole data"
+      tindex_obs(:)=0
+      tindex_sim(:)=0
       do iperiod=1,nperiods
+        beg_cur=1
         do iyear=1,nyears
-
           beg_ind_obs=beg_nday(iperiod,iyear)-beg_nday(1,1)+1
           end_ind_obs=end_nday(iperiod,iyear)-beg_nday(1,1)+1
           beg_ind_sim=beg_nday(iperiod,iyear)-beg_nday(1,1)+1
           end_ind_sim=end_nday(iperiod,iyear)-beg_nday(1,1)+1
           nt=end_ind_sim-beg_ind_sim+1
+          if (trim(methodname)=="cor") then
+            do i=1,nlat
+              do j=1,nlon
+                if (mask(i,j)==maskval) then
+                    temp_3d(j,i,iyear)=corrcoef_1d(data_obs(j,i,beg_ind_obs:end_ind_obs), &
+                                             data_sim(j,i,beg_ind_sim:end_ind_sim),nt)
+                else
+                  temp_3d(j,i,iyear)=0.0
+                end if
+              enddo 
+            enddo 
+          elseif (trim(methodname)=="rmse") then
+            do i=1,nlat
+              do j=1,nlon
+                if (mask(i,j)==maskval) then
+                    temp_3d(j,i,iyear)=rmse_1d(data_obs(j,i,beg_ind_obs:end_ind_obs), &
+                                             data_sim(j,i,beg_ind_sim:end_ind_sim),nt)
+                else
+                  temp_3d(j,i,iyear)=0.0
+                end if
+              enddo 
+            enddo 
+          elseif (trim(methodname)=="ets") then
+            do it=beg_cur,beg_cur+nt-1
+              tindex_obs(it)=beg_ind_obs+it-beg_cur
+              tindex_sim(it)=beg_ind_sim+it-beg_cur
+            end do
+            print*,beg_cur,nt
+            beg_cur=beg_cur+nt
+          else
+            print*,("No such option, you have to choose between cor,ets and rmse")
+            stop
+          endif
+
+          if (.not.trim(methodname)=="ets") then
+            if (ana_yearly==1) then
+              do ireg=1,nregs
+                ipoint=0
+                temp_1d=0.0
+                do i=1,nlat
+                  do j=1,nlon
+                    if (ireg==regmap(i,j)) then
+                      ipoint=ipoint+1
+                      temp_1d(ipoint)=temp_3d(j,i,iyear)
+                    end if
+                  enddo 
+                enddo 
+                call smaplesPDF(temp_1d(1:ipoint),pdf_yearly(:,ireg,iperiod,iyear,icase),ipoint,n_bin,x_min,x_max)
+              enddo 
+            endif
+          endif
+        enddo 
+        if (trim(methodname)=="ets") then
+          lastindex_s=beg_cur-1
+          print*,"There are ",lastindex_s," days in season"
           do i=1,nlat
             do j=1,nlon
               if (mask(i,j)==maskval) then
-                if (trim(methodname)=="cor") then
-                  temp_3d(j,i,iyear)=corrcoef_1d(data_obs(j,i,beg_ind_obs:end_ind_obs), &
-                                           data_sim(j,i,beg_ind_sim:end_ind_sim),nt)
-                elseif (trim(methodname)=="rmse") then
-                  temp_3d(j,i,iyear)=rmse_1d(data_obs(j,i,beg_ind_obs:end_ind_obs), &
-                                           data_sim(j,i,beg_ind_sim:end_ind_sim),nt)
-                else
-                  print*,("No such option, you have to choose between cor and rmse")
-                  stop
-                endif
+                do icrt=1,ncrt
+                  call etscalculator_1d(obs=data_obs(j,i,tindex_obs(1:lastindex_s)), &
+                                        sim=data_sim(j,i,tindex_sim(1:lastindex_s)), &
+                                        crt=crts(icrt),               &
+                                        ets=ets_output(icrt,i,j,iperiod,icase),nt=lastindex_s)
+                enddo
               else
-                temp_3d(j,i,iyear)=0.0
-              end if
+                ets_output(:,i,j,iperiod,icase)=0.0
+              endif
             enddo 
           enddo 
-          if (ana_yearly==1) then
-            do ireg=1,nregs
-              ipoint=0
-              temp_1d=0.0
-              do i=1,nlat
-                do j=1,nlon
-                  if (ireg==regmap(i,j)) then
-                    ipoint=ipoint+1
-                    temp_1d(ipoint)=temp_3d(j,i,iyear)
-                  end if
-                enddo 
-              enddo 
-              call smaplesPDF(temp_1d(1:ipoint),pdf_yearly(:,ireg,iperiod,iyear,icase),ipoint,n_bin,x_min,x_max)
-            enddo 
-          endif
-        enddo 
-        if (.not.(ana_yearly==1)) then
+          print*,"finished season number:",iperiod
+        elseif (.not.(ana_yearly==1)) then
           do ireg=1,nregs
             ipoint=0
             do i=1,nlat
@@ -238,7 +303,6 @@ module cs_stat
               enddo 
             enddo 
             call smaplesPDF_2d(temp_2d(:,1:ipoint),pdf(:,ireg,iperiod,icase),ipoint,nyears,n_bin,x_min,x_max)
-!           print*,temp_2d(:,1:ipoint)
           enddo 
         endif
       enddo 
@@ -937,7 +1001,43 @@ end subroutine
     endif
   end subroutine xananual_ana
 
-  subroutine etscalculator(obs,sim,crt,ets,nx,ny,mask,maskval)
+  subroutine etscalculator_1d(obs,sim,crt,ets,nt)
+    implicit none
+    integer,intent(in)               ::nt
+    real,intent(in),dimension(nt)::obs,sim
+    real,intent(in)                 ::crt 
+    real,intent(out)                ::ets
+    !local 
+    integer :: t
+    real    :: a,b,c,d,ar
+    a=0.0
+    b=0.0
+    c=0.0
+    d=0.0
+    ets=0.0
+    do t=1,nt
+      if(obs(t)>=crt.and.sim(t)>=crt)then
+        a=a+1
+      elseif(obs(t)<crt.and.sim(t)>=crt)then
+        b=b+1
+      elseif(obs(t)>=crt.and.sim(t)<crt)then
+        c=c+1
+      elseif(obs(t)<crt.and.sim(t)<crt)then
+        d=d+1
+      endif
+    end do
+    ar=(a+b)*(a+c)/nt
+    if(abs(a+b+c-ar).gt.0.001)then
+      ets=(a-ar) /(a+b+c-ar)
+    endif
+    if (ets<0.0) then
+      ets=0.0
+    end if
+
+
+  end subroutine etscalculator_1d
+
+  subroutine etscalculator_2d(obs,sim,crt,ets,nx,ny,mask,maskval)
     implicit none
     integer,intent(in)               ::nx,ny
     real,intent(in),dimension(nx,ny)::obs,sim
@@ -983,7 +1083,7 @@ end subroutine
     end if
 
 
-  end subroutine etscalculator
+  end subroutine etscalculator_2d
 
 
   subroutine Tananual_ana(obs,sim,mask,methodname,maskval,crts,ny,nx,nyears,nmonths,ncrt,cor,ets)
@@ -1012,7 +1112,7 @@ end subroutine
       do y=1,nyears
        do m=1,nmonths
          do icrt=1,ncrt
-          call etscalculator(obs(y,m,:,:),sim(y,m,:,:),crts(icrt),ets(icrt,t),nx,ny,mask,maskval)
+          call etscalculator_2d(obs(y,m,:,:),sim(y,m,:,:),crts(icrt),ets(icrt,t),nx,ny,mask,maskval)
          enddo
         t=t+1
        end do
