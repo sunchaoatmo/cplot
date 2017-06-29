@@ -20,15 +20,21 @@ nicev={"T2M":"T2M","CLDFRA":"CLT","CLDFRAl":"CLL","CLDFRAm":"CLM","CLDFRAh":"CLH
 #style = Style(name="PPT",sidenamefs=3,tickfs=5,format="png",Figsize=(2.73,2.9))
 style = Style(name="PPT",sidenamefs=8,tickfs=7,format="pdf")
 figsizes={5:(8.5,9.0),4:(8.25,7.0),3:(8.5,5.4),2:(8.5,3.61)}
+figsizes={5:(8.5,9.0),4:(8.25,7.0),3:(8.5,5.6),2:(8.5,3.61)}
 # US figsizes={5:(8.5,8.7),4:(8.25,7.0),3:(8.5,4.05),2:(8.5,3.61)}
 axes_bar={4:[0.15, 0.18, 0.7, 0.1],3:[0.15, 0.03, 0.7, 0.1]}
 axes_bar={5:[0.15, 0.04, 0.7, 0.1],4:[0.15, 0.03, 0.7, 0.1],3:[0.15, 0.03, 0.7, 0.1],2:[0.15, 0.02, 0.7, 0.1]}
-def cshistplot(sample,ax,lw,label,color,shade,legend=True,**kwargs):
+def cshistplot(sample,xsample,ax,lw,label,color,shade,legend=True,hist=False,**kwargs):
   import numpy as np
-  hist,bin_edges=np.histogram(sample, bins='fd', range=None)
-  #plt.hist(a, bins='auto')
-  x=(bin_edges[1:]+bin_edges[:-1])*.5
-  y=hist/float(len(sample))*100.0
+  import scipy
+  if hist:
+    hist,bin_edges=np.histogram(sample, bins='fd', range=None)
+    x=(bin_edges[1:]+bin_edges[:-1])*.5
+    y=hist/float(len(sample))*100.0
+  else:
+    x=np.linspace(xsample[0],xsample[-1],100)
+    kernal=scipy.stats.gaussian_kde(sample, bw_method= "silverman")
+    y=kernal(x)
   ax.plot(x, y, color=color, label=label,lw=lw, **kwargs)
   alpha = kwargs.get("alpha", 0.25)
   if shade:
@@ -37,6 +43,7 @@ def cshistplot(sample,ax,lw,label,color,shade,legend=True,**kwargs):
   # Draw the legend here
   if legend:
     ax.legend(loc="best")
+ 
 
 def seasonalmap(data,vname,crt=-9999):
   plotList =data.plotlist
@@ -66,6 +73,7 @@ def seasonalmap(data,vname,crt=-9999):
     contourfilename+=str(crt)
   extend="both"
   if "cor" in data.method:
+    lefttick,righttick,legloc,labloc1,labloc2,ndx="on","off",2,0,1,1
     suptitle=data.title[vname]
     clevel=[ -0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
     cmp   =cmap_hotcold18 #plt.get_cmap('seismic') #;cmp.set_under('b')
@@ -80,10 +88,11 @@ def seasonalmap(data,vname,crt=-9999):
     clevel2=[x*2 for x in range(-10,11)]
     clevel.remove(0)
   elif data.method=="ets":
-    extend="max"
+    extend="both"
     suptitle="ETS %s crt=%s"%(data.title[vname],crt)
-    cmp   =plt.get_cmap('viridis_r') #;cmp.set_over('maroon');cmp.set_under('midnightblue')
+    cmp   =cmap_WBGYR;cmp.set_under('white')
     clevel=data.ets_level
+    lefttick,righttick,legloc,labloc1,labloc2,ndx="off","on",2,-2,-1,2
   else:
     suptitle="%s (%s)"%(sim_nicename.get(vname,vname),plotres[vname]['unit'])
     extend="max"
@@ -111,12 +120,16 @@ def seasonalmap(data,vname,crt=-9999):
       for casenumber,case in enumerate(plotList):
         legname = sim_nicename.get(case,case)
         color1=data.casecolors[case]  #tableau20[2*(casenumber-1)] 
-        #cshistplot(data.plotdata[case][vname][k,:,:].compressed(),ax=ax1,lw=0.2,label=legname,color=color1,shade=True)
-        sns.kdeplot(data.plotdata[case][vname][k,:,:].compressed(),lw=0.2,label=legname,color=color1,shade=True)
+        _, mask_e = np.broadcast_arrays(data.plotdata[case][vname], data.eastmask[None,...])
+        pdfdata=ma.masked_array((data.plotdata[case][vname][:]), mask=mask_e)
+        cshistplot(pdfdata[k,:,:].compressed(),clevelpdf,ax=ax1,lw=0.2,label=legname,color=color1,shade=True)
+       # sns.kdeplot(data.pdfdata[case][vname][k,:,:].compressed(),lw=0.2
+       #             ,gridsize=50
+       #             ,label=legname,color=color1,shade=True)
       pdfmax=ax1.get_ylim()[1] if ax1.get_ylim()[1]>pdfmax else pdfmax
       figurenum+=1
     if hasattr(data,"%s_pdfmax"%vname.lower()):
-      pdfmax=getattr(data,"%s_pdfmax"%vname.lower())
+      pdfmax= min(pdfmax,getattr(data,"%s_pdfmax"%vname.lower()))
     figurenum=0
     from math import ceil 
     from matplotlib.ticker import AutoMinorLocator,NullFormatter,MultipleLocator, FormatStrFormatter
@@ -124,50 +137,49 @@ def seasonalmap(data,vname,crt=-9999):
     for k,name in enumerate(seasonname):
       ax1 = plt.subplot(gs0[figurenum])
       tickloc=np.linspace(0,pdfmax,num=8) #[x for x  in range(0,int(pdfmax),int(pdfmax)/5)]
-      tickloc=[x for x  in range(0,int(ceil(pdfmax)))]
+      dy =int(ceil(pdfmax/5.0))
+      tickloc=[x for x  in range(0,int(ceil(pdfmax)),dy)]
       ax1.set_yticks(tickloc)
       ax1.yaxis.set_minor_locator(minorLocator)
       plt.yticks(ax1.get_yticks(),"")
-      if k!=0:
-        ax1.get_legend().set_visible(False)
-      else:
-        leg=ax1.legend(loc=1,borderaxespad=0.,frameon=False, fontsize=6)
+      if k==0:
+        leg=ax1.legend(loc=legloc,borderaxespad=0.,frameon=False, fontsize=6)
+        #leg=ax1.legend(loc=1,borderaxespad=0.,frameon=False, fontsize=6)
         for legobj in leg.legendHandles:
               legobj.set_linewidth(1.0)
-        #plt.yticks(ax1.get_yticks(), (int(x) for x in ax1.get_yticks() * 100))
-        """
-        ax1.text(0.1, 0.15, 'Frequency ($\%$)',fontsize=8,
-           verticalalignment='bottom', horizontalalignment='left',
-           transform=ax1.transAxes,rotation="vertical")
-        """
         for y in ax1.get_yticks()[1:]:
-          ax1.text((clevelpdf[1]*0.1+clevelpdf[0]*0.9), y, y,fontsize=6,
+          ax1.text((clevelpdf[labloc1]*0.9+clevelpdf[labloc2]*0.1), y, y,fontsize=6,
           verticalalignment='center', horizontalalignment='left') #,
-          #rotation="vertical")
-      plt.axvline(0, color='black',lw=0.8,ls=":")
-      plt.xticks(clevelpdf[1:-1], (x for x in clevelpdf[1:-1]))
+      else:
+        ax1.get_legend().set_visible(False)
+      if "cor" in data.method or "bias" in data.method:
+        plt.axvline(0, color='black',lw=0.8,ls=":")
+      plt.xticks(clevelpdf[1:-1:ndx], (x for x in clevelpdf[1:-1:ndx]))
       plt.tick_params(axis='both', which='major', labelsize=6)
       for axis in ['top','bottom','left','right']:
         ax1.spines[axis].set_linewidth(0.01)
       plt.tick_params(
         which='major',      # both major and minor ticks are affected
-        right='off',         # ticks along the top edge are off
+        direction="in",
+        right=righttick,         # ticks along the top edge are off
         bottom='on',         # ticks along the top edge are off
-        left='on',         # ticks along the top edge are off
+        left=lefttick,         # ticks along the top edge are off
         top='off',         # ticks along the top edge are off
-        length=2
+        length=2,width=0.6
         ) 
       plt.tick_params(
         which='minor',      # both major and minor ticks are affected
-        right='off',         # ticks along the top edge are off
+        direction="in",
+        right=righttick,         # ticks along the top edge are off
         bottom='off',         # ticks along the top edge are off
-        left='on',         # ticks along the top edge are off
+        left=lefttick,         # ticks along the top edge are off
         top='off',         # ticks along the top edge are off
-        length=1
+        length=1,width=0.6
         ) 
 
       plt.ylim([0,float(pdfmax)])
       plt.xlim([clevelpdf[0],clevelpdf[-1]])
+
       figurenum+=1
 
 ###################################### Plot Contour ########################################
