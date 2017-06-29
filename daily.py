@@ -80,6 +80,7 @@ class daily_data(reginalmetfield):
 
     if "Hovmoller" in self.plottype:
       import cPickle as pickle
+      print(self.start_lat,self.end_lat,self.dlat)
       xlat=np.arange(self.start_lat,self.end_lat,self.dlat)
       filenamep=self.plotname+"_dat.p"
       try:
@@ -101,6 +102,7 @@ class daily_data(reginalmetfield):
                                        mask=self.mask,maskval=self.maskval,
                                        xlat=xlat,xlon_lb=self.start_lon,xlon_ub=self.end_lon,dlat=self.dlat,
                                        ncell=nlat,nday=nday,nyear=nyear,
+                                       cutpoints=self.cutpoints,
                                        nlon=self.nlon,nlat=self.nlat,ntime=ntime)
         pickle.dump( self.plotdata, open(filenamep, "wb" ) )
 
