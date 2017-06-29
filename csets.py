@@ -9,7 +9,7 @@ figsizes={5:(8.5,9.0),4:(8.25,7.0),3:(8.5,7.0),2:(8.5,3.61)}
 def etscontourf(data,vname):
   data.plotlist.remove("ERI")
   for ireg in range(int(data.nregs)):
-    regname=str("".join(data.regnames[ireg]))
+    regname=data.regnames[ireg]
     filename=data.plotname+"_"+"".join(vname)+regname
     outputformat="pdf"
     if outputformat=="pdf":
@@ -27,7 +27,6 @@ def etscontourf(data,vname):
     for casenumber,case in enumerate(data.plotlist):
       ax1 = plt.subplot(gs0[casenumber])
       legname = sim_nicename.get(case,case)
-      #cax=plt.contourf(data.plotdata[case][vname][ireg],
       cax=plt.contourf(data.plotdata[case][vname][ireg]-data.plotdata['ERI'][vname][ireg],
                        levels=data.ets_level,
                        extend="both",
@@ -52,7 +51,6 @@ def etscontourf(data,vname):
           top='off',         # ticks along the top edge are off
           length=1
           ) 
-      plt.xticks(range(0,450,5))
 
 
     ax2 = fig.add_axes(axes_bar[len(data.plotlist)],aspect=0.02)
