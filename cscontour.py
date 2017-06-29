@@ -38,7 +38,7 @@ def cshistplot(sample,ax,lw,label,color,shade,legend=True,**kwargs):
   if legend:
     ax.legend(loc="best")
 
-def seasonalmap(data,vname):
+def seasonalmap(data,vname,crt=-9999):
   plotList =data.plotlist
   YB       =data.yb
   YE       =data.ye
@@ -49,6 +49,8 @@ def seasonalmap(data,vname):
   if data.contourmappdf:
     if  "cor"in data.method:
       clevelpdf= [ -0.9,-0.6,-0.3,0.0,0.3,0.6,0.9]
+    elif  "ets"in data.method:
+      clevelpdf= data.ets_level
     else:
       try:
         clevelpdf=getattr(data,"%s_%s"%(vname.lower(),"clevel2"))[:]
@@ -60,14 +62,12 @@ def seasonalmap(data,vname):
     gs0.update(hspace=0.23, wspace=0.0)
   fig = plt.figure(figsize=figsizes[ncols])
   contourfilename=plotname+"_"+"".join(vname)
+  if crt>0:
+    contourfilename+=str(crt)
   extend="both"
   if "cor" in data.method:
     suptitle=data.title[vname]
-    #clevel=[ -1,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
     clevel=[ -0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
-    #clevel=[ 0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
-    #cmp   =cmap_haxby  ;cmp.set_under('w')
-    #extend="neither"
     cmp   =cmap_hotcold18 #plt.get_cmap('seismic') #;cmp.set_under('b')
   elif data.method=="rmse":
     clevel=getattr(data,"%s_%s"%(vname.lower(),"clevel0"))
@@ -79,6 +79,11 @@ def seasonalmap(data,vname):
     clevel=range(-20,22,2);
     clevel2=[x*2 for x in range(-10,11)]
     clevel.remove(0)
+  elif data.method=="ets":
+    extend="max"
+    suptitle="ETS %s crt=%s"%(data.title[vname],crt)
+    cmp   =plt.get_cmap('viridis_r') #;cmp.set_over('maroon');cmp.set_under('midnightblue')
+    clevel=data.ets_level
   else:
     suptitle="%s (%s)"%(sim_nicename.get(vname,vname),plotres[vname]['unit'])
     extend="max"
@@ -122,7 +127,6 @@ def seasonalmap(data,vname):
       tickloc=[x for x  in range(0,int(ceil(pdfmax)))]
       ax1.set_yticks(tickloc)
       ax1.yaxis.set_minor_locator(minorLocator)
-
       plt.yticks(ax1.get_yticks(),"")
       if k!=0:
         ax1.get_legend().set_visible(False)
