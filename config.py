@@ -10,7 +10,7 @@ def retrivesetting(config,section,setting):
           setting[option]=[int(x.strip()) for x in setting[option]]
         except:
           setting[option]=[float(x.strip()) for x in setting[option]]
-    elif setting[option].lstrip("-+").isdigit():
+    elif setting[option].lstrip("-+")[0].isdigit():
       try:
         setting[option]=int(setting[option])
       except:
