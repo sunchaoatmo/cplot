@@ -2,24 +2,6 @@ from context import reginalmetfield
 class daily_data(reginalmetfield):
   def __init__(self,setting):
     reginalmetfield.__init__(self,setting)
-    combined=PDF.copy()
-    combined.update(Hovmoller)
-    for key,item in combined.iteritems():
-       setattr(self,key,item)
-
-  """
-  def __init__(self,period,vnames,cases,nlevel,cutpoints,neof,
-               method,plottype,shapefile,datapath,obsname,GCM_name,Time_control,
-               wrfinputfile,landmaskfile,masktype,PLOT,Hovmoller,PDF,regmapfile):
-    reginalmetfield.__init__(self,period,vnames,cases,nlevel,cutpoints,neof,
-               method,plottype,shapefile,datapath,obsname,GCM_name,Time_control,
-               wrfinputfile,landmaskfile,masktype,PLOT,regmapfile=regmapfile)
-
-    combined=PDF.copy()
-    combined.update(Hovmoller)
-    for key,item in combined.iteritems():
-       setattr(self,key,item)
-  """
 
   def Read(self):
     from netCDF4 import Dataset,num2date
@@ -131,7 +113,7 @@ class daily_data(reginalmetfield):
       except:
         nperiods=self.outputnperiod
         ncases=len(self.cases)
-        nlandpoints=np.sum(self.maskval)
+        nlandpoints=np.sum(self.mask)
         nyears=self.ye-self.yb+1
         for vname in self.vnames:
           obsfilename=self.filename[self.obsname][vname]
@@ -143,8 +125,7 @@ class daily_data(reginalmetfield):
           calendar=self.time[self.obsname][vname].calendar
           beg_nday,end_nday=select_beg_end(self.yb,self.ye,nperiods,units,calendar)
           ntime =end_nday[-1][-1]-beg_nday[0][0]+1
-          print(self.n_bin,self.x_max)
-          self.plotdata["all"][vname]=cs_stat.cs_stat.pdf_cor_rms(
+          pdf,ets=cs_stat.cs_stat.pdf_cor_rms(
                        ana_yearly=self.ana_yearly,methodname=self.method,vname=vname,
                        nlat=self.nlat,nlon=self.nlon,nregs=self.nregs,               
                        filename=filename,obsfilename=obsfilename,          
@@ -154,14 +135,63 @@ class daily_data(reginalmetfield):
                        mask=self.mask,maskval=self.maskval,nlandpoints=nlandpoints,      
                        regmap=self.regmap,                        
                        n_bin=self.n_bin,x_min=self.x_min,x_max=self.x_max)
+          self.plotdata["all"][vname]=pdf
         pickle.dump( self.plotdata, open(filenamep, "wb" ) )
 
+    if "ets" in self.method:
+      import cPickle as pickle
+      filenamep=self.plotname+"_dat.p"
+      try:
+        self.plotdata= pickle.load( open( filenamep, "rb" ) )
+      except:
+        nperiods=self.outputnperiod
+        ncases=len(self.cases)
+        nlandpoints=np.sum(self.mask)
+        nyears=self.ye-self.yb+1
+        for vname in self.vnames:
+          obsfilename=self.filename[self.obsname][vname]
+          filenamelen = np.max(np.array([ len(self.filename[case][vname]) for case in self.cases if case!=self.obsname]))
+          filenamea = [ self.filename[case][vname]+(filenamelen-len(self.filename[case][vname]))*" " 
+                         for case in self.cases if case!=self.obsname]
+          filename = np.array(filenamea,dtype=str(filenamelen)+'c').T
+          units   =self.time[self.obsname][vname].units
+          calendar=self.time[self.obsname][vname].calendar
+          beg_nday,end_nday=select_beg_end(self.yb,self.ye,nperiods,units,calendar)
+          ntime =end_nday[-1][-1]-beg_nday[0][0]+1
+          pdf,ets=cs_stat.cs_stat.pdf_cor_rms(
+                       ana_yearly=self.ana_yearly,methodname=self.method,vname=vname,
+                       nlat=self.nlat,nlon=self.nlon,nregs=self.nregs,               
+                       filename=filename,obsfilename=obsfilename,          
+                       filenamelen=filenamelen,
+                       ntime=ntime   ,nperiods=nperiods,nyears=nyears,ncases=ncases,  
+                       beg_nday=beg_nday,end_nday=end_nday,             
+                       mask=self.mask,maskval=self.maskval,nlandpoints=nlandpoints,      
+                       regmap=self.regmap,                        
+                       n_bin=self.n_bin,x_min=self.x_min,x_max=self.x_max,
+                       cutpoints=self.cutpoints,
+                       crts=self.crts_level)
+          self.plotdata["all"][vname]=ets
+        pickle.dump( self.plotdata, open(filenamep, "wb" ) )
+
+
   def Plot(self):
-    if "Hovmoller" in self.plottype:
-      from cshov import hovplot
-      for vname in self.vnames:
+    for vname in self.vnames:
+      if "Hovmoller" in self.plottype:
+        from cshov import hovplot
         hovplot(self,vname)
-    elif "pdf" in self.plottype:
-      from cspdf import pdfplot
-      for vname in self.vnames:
+      elif "pdf" in self.plottype:
+        from cspdf import pdfplot
         pdfplot(self,vname)
+      elif "ets" in self.method:
+        from cscontour import seasonalmap
+        from constant import seasonname
+        import numpy.ma as ma
+        import numpy as np
+        for icrt,crt in enumerate(self.crts_level):
+          for icase,case in enumerate(self.plotlist):
+            self.plotdata[case][vname]= np.zeros((4,self.nlat,self.nlon))
+            for k,name in enumerate(seasonname):
+              self.plotdata[case][vname][k,:,:]=self.plotdata["all"][vname][icrt,:,:,k,icase]
+              _, mask_b = np.broadcast_arrays(self.plotdata[case][vname], self.mask[None,...])
+              self.plotdata[case][vname]=ma.masked_array((self.plotdata[case][vname]), mask=mask_b)
+          seasonalmap(self,vname,crt)
