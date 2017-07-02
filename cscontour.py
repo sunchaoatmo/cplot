@@ -72,6 +72,7 @@ def seasonalmap(data,vname,crt=-9999):
   if crt>0:
     contourfilename+=str(crt)
   extend="both"
+  lefttick,righttick,legloc,labloc1,labloc2,ndx="on","off",2,0,1,1
   if "cor" in data.method:
     lefttick,righttick,legloc,labloc1,labloc2,ndx="on","off",2,0,1,1
     suptitle=data.title[vname]

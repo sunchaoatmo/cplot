@@ -43,7 +43,6 @@ class reginalmetfield(field):
     from netCDF4 import Dataset
     import numpy as np
     import numpy.ma as ma
-
     field.__init__(self,setting)
 
     """
@@ -172,16 +171,17 @@ class reginalmetfield(field):
 
   def Xanalysis(self):
     import numpy as np
-    from constant import seasonname
-    import cs_stat
-    import numpy.ma as ma
     [
     self.xanalysis_inid(vname,case)
-    for vname in self.vnames
+    for vname in self.xvnames
     for case in self.plotlist 
     ]
 
   def xanalysis_inid(self,vname,case):
+    from constant import seasonname
+    import cs_stat
+    import numpy.ma as ma
+    import numpy as np
     self.plotdata[case][vname]= np.zeros((4,self.nlat,self.nlon))
     for k,name in enumerate(seasonname):
       self.plotdata[case][vname][k]= cs_stat.cs_stat.xananual_ana(
@@ -199,9 +199,6 @@ class reginalmetfield(field):
 
   def temporalanalysis(self):
     import numpy as np
-    import numpy.ma as ma
-    from constant import seasonname
-    import cs_stat
     import sys
     [ self.temporalanlysis_indi(vname,case)
     for vname in self.vnames
@@ -210,6 +207,7 @@ class reginalmetfield(field):
 
   def temporalanlysis_indi(self,vname,case):
     #self.plotdata[case][vname]= np.zeros((int(self.nregs)+1,4,self.ye-self.yb+1,2))
+    import cs_stat
     self.plotdata[case][vname]= cs_stat.cs_stat.ananual_temp(
                                          sim=self.data[case][vname],
                                          obs=self.data[self.obsname][vname],
@@ -219,19 +217,20 @@ class reginalmetfield(field):
 
   def spatialanalysis(self):
     import numpy as np
-    import numpy.ma as ma
-    from constant import seasonname
-    import cs_stat
     import sys
 
     [self.analysiscase1(vname,case)  
      for vname in self.vnames 
-     for case in self.plotlist 
+     for case in self.cases 
     ]
     if "Taylor" in self.plottype:
       [self.analysiscase2(vname) for vname in self.vnames]
 
   def analysiscase1(self,vname,case):
+    from constant import seasonname
+    import numpy as np
+    import cs_stat
+    import numpy.ma as ma
     if self.method=="eof":
       from eofs.standard import eof
       self.plotdata[case][vname]=[]
@@ -258,33 +257,38 @@ class reginalmetfield(field):
 
 
   def analysiscase2(self,vname):
+    from constant import seasonname
+    import numpy as np
     def taylorcalculator(obs,sim):
+      import numpy.ma as ma
       stdrefs=ma.std(obs) #whether or not compressed has no impact on result
       std_sim=ma.std(sim)/stdrefs
       coef=np.corrcoef(sim,obs)
       return (std_sim,coef[0,1])
+    tempoutput={}
     for case in self.plotlist:
-        tempoutput=np.zeros((int(self.nregs)+1,len(seasonname),2))
+        tempoutput[case]=np.zeros((int(self.nregs)+1,len(seasonname),2))
         for k,name in enumerate(seasonname):
-          tempoutput[0,k,:]=taylorcalculator(self.plotdata[self.obsname][vname][k,:,:].compressed(),
+          tempoutput[case][0,k,:]=taylorcalculator(self.plotdata[self.obsname][vname][k,:,:].compressed(),
                                              self.plotdata[case][vname][k,:,:].compressed())
           for ireg in range(1,1+int(self.nregs)):
-            tempoutput[ireg,k,:]=taylorcalculator(self.plotdata[self.obsname][vname][k,self.regmap==ireg].compressed(),
+            tempoutput[case][ireg,k,:]=taylorcalculator(self.plotdata[self.obsname][vname][k,self.regmap==ireg].compressed(),
                                                   self.plotdata[case][vname][k,self.regmap==ireg].compressed())
-        self.plotdata[case][vname]=tempoutput
+    for case in self.plotlist:
+        self.plotdata[case][vname]=tempoutput[case]
 
   def Plot(self):
     vnames=getattr(self,"xvnames",self.vnames)
     if self.plottype=="contour": # or self.plottype=="diff": 
         if self.method=="eof":
           from cseof import eofplot
-          [eofplot(self,vname) vnames]
+          [eofplot(self,vname) for vname in vnames]
         else:
           from cscontour import seasonalmap
-          [seasonalmap(self,vname) vnames]
+          [seasonalmap(self,vname) for vname in  vnames]
     elif self.plottype=="Taylor": 
       from cstaylor import seasonaltaylor
-      [seasonaltaylor(self,vname) self.vnames]
+      [seasonaltaylor(self,vname) for vname in self.vnames]
     elif self.plottype=="CTaylor": 
       from cstaylor import combinedtaylor
       combinedtaylor(self)
