@@ -22,16 +22,16 @@ class field(object):
     self.title   ={}
     if "X" in self.method:
       self.xvnames=[combined for combined in combinations(self.vnames, 2)] 
-      for vname in self.xvnames:
-        self.title[vname]="%s %s %s %s %s-%s"%( sim_nicename.get(self.method,self.method),
+      [ self.title[vname]="%s %s %s %s %s-%s"%( sim_nicename.get(self.method,self.method),
                                               self.period,
                                               vname[0],vname[1],
                                               self.yb,self.ye)
+      for vname in self.xvnames]
     else:
-      for vname in self.vnames:
-        self.title[vname]="%s %s %s %s-%s"%(sim_nicename.get(self.method,self.method),
+      [  self.title[vname]="%s %s %s %s-%s"%(sim_nicename.get(self.method,self.method),
                                             self.period,vname,
                                             self.yb,self.ye)
+      for vname in self.vnames ]
 #    if "Xcorbias"==self.method or "ets"==self.method or "cor"==self.method or "Tcor"==self.method or self.method=="rmse" or self.method=="diff" or "Taylor" in self.plottype:
 #      self.plotlist.remove(self.obsname)
     if not ("mean"==self.method and self.plottype=="contour"):
