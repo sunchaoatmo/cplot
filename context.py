@@ -166,7 +166,7 @@ class reginalmetfield(field):
       self.Ianalysis()
 
   def Ianalysis(self):
-    Ianalysisdict={"spatial":self.spatialanalysis
+    Ianalysisdict={"spatial":self.spatialanalysis,
                  "temporal":self.temporalanalysis}
     Ianalysisdict[self.tltype]()
 
