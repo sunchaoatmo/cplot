@@ -20,11 +20,11 @@ nicev={"T2M":"T2M","CLDFRA":"CLT","CLDFRAl":"CLL","CLDFRAm":"CLM","CLDFRAh":"CLH
 #style = Style(name="PPT",sidenamefs=3,tickfs=5,format="png",Figsize=(2.73,2.9))
 style = Style(name="PPT",sidenamefs=8,tickfs=7,format="pdf")
 figsizes={5:(8.5,9.0),4:(8.25,7.0),3:(8.5,5.4),2:(8.5,3.61)}
-figsizes={5:(8.5,9.0),4:(8.25,7.0),3:(8.5,5.6),2:(8.5,3.61)}
+figsizes={5:(8.5,9.35),4:(8.25,7.25),3:(8.5,5.6),2:(8.5,3.61)}
 # US figsizes={5:(8.5,8.7),4:(8.25,7.0),3:(8.5,4.05),2:(8.5,3.61)}
 axes_bar={4:[0.15, 0.18, 0.7, 0.1],3:[0.15, 0.03, 0.7, 0.1]}
 axes_bar={5:[0.15, 0.04, 0.7, 0.1],4:[0.15, 0.03, 0.7, 0.1],3:[0.15, 0.03, 0.7, 0.1],2:[0.15, 0.02, 0.7, 0.1]}
-def cshistplot(sample,xsample,ax,lw,label,color,shade,legend=True,hist=False,**kwargs):
+def cshistplot(sample,alpha,xsample,ax,lw,label,color,shade,legend=True,hist=False,**kwargs):
   import numpy as np
   import scipy
   if hist:
@@ -36,7 +36,6 @@ def cshistplot(sample,xsample,ax,lw,label,color,shade,legend=True,hist=False,**k
     kernal=scipy.stats.gaussian_kde(sample, bw_method= "silverman")
     y=kernal(x)
   ax.plot(x, y, color=color, label=label,lw=lw, **kwargs)
-  alpha = kwargs.get("alpha", 0.25)
   if shade:
     ax.fill_between(x, 1e-12, y, facecolor=color, alpha=alpha)
 
@@ -67,6 +66,7 @@ def seasonalmap(data,vname,crt=-9999):
     ncols+=1
     gs0 = gridspec.GridSpec(ncols,len(seasonname) )
     gs0.update(hspace=0.23, wspace=0.0)
+
   fig = plt.figure(figsize=figsizes[ncols])
   contourfilename=plotname+"_"+"".join(vname)
   if crt>0:
@@ -107,6 +107,7 @@ def seasonalmap(data,vname,crt=-9999):
     pp = PdfPages(contourfilename+'.pdf')
   else:
     page=0
+  legloc=0
 
   
   fig.suptitle(suptitle, fontsize=12, fontweight='bold')
@@ -119,17 +120,19 @@ def seasonalmap(data,vname,crt=-9999):
       ax1 = plt.subplot(gs0[figurenum])
       for casenumber,case in enumerate(plotList):
         legname = sim_nicename.get(case,case)
-        color1=data.casecolors[case]  #tableau20[2*(casenumber-1)] 
-        _, mask_e = np.broadcast_arrays(data.plotdata[case][vname], data.eastmask[None,...])
-        pdfdata=ma.masked_array((data.plotdata[case][vname][:]), mask=mask_e)
-        cshistplot(pdfdata[k,:,:].compressed(),clevelpdf,ax=ax1,lw=0.2,label=legname,color=color1,shade=True)
+        pdfdata=ma.masked_array((data.plotdata[case][vname][k,:,:]), mask=data.eastmask)
+        color=data.casecolors[case]  #tableau20[2*(casenumber-1)] 
+        alpha=data.casealphas[case]  #tableau20[2*(casenumber-1)] 
+        cshistplot(pdfdata[:,:].compressed(),alpha,clevelpdf,ax=ax1,lw=0.5,label=legname,color=color,shade=True)
        # sns.kdeplot(data.pdfdata[case][vname][k,:,:].compressed(),lw=0.2
        #             ,gridsize=50
        #             ,label=legname,color=color1,shade=True)
       pdfmax=ax1.get_ylim()[1] if ax1.get_ylim()[1]>pdfmax else pdfmax
       figurenum+=1
-    if hasattr(data,"%s_pdfmax"%vname.lower()):
+    try:
       pdfmax= min(pdfmax,getattr(data,"%s_pdfmax"%vname.lower()))
+    except:
+      pass
     figurenum=0
     from math import ceil 
     from matplotlib.ticker import AutoMinorLocator,NullFormatter,MultipleLocator, FormatStrFormatter
@@ -143,13 +146,19 @@ def seasonalmap(data,vname,crt=-9999):
       ax1.yaxis.set_minor_locator(minorLocator)
       plt.yticks(ax1.get_yticks(),"")
       if k==0:
-        leg=ax1.legend(loc=legloc,borderaxespad=0.,frameon=False, fontsize=6)
+        leg=ax1.legend(bbox_to_anchor=(0.05,0.92,0.01,0.03),mode="expand",handlelength=0.5,borderaxespad=0.,frameon=False,   fontsize=6)
+        #leg=ax1.legend(bbox_to_anchor=(0.57,0.92,0.01,0.03),mode="expand",handlelength=0.5,borderaxespad=0.,frameon=False,   fontsize=6)
+        #leg=ax1.legend(bbox_to_anchor=(0.5,0.92,0.01,0.03),borderaxespad=0.,frameon=False,   fontsize=6)
+        #leg=ax1.legend(loc=legloc,borderaxespad=0.,frameon=False, fontsize=6)
         #leg=ax1.legend(loc=1,borderaxespad=0.,frameon=False, fontsize=6)
         for legobj in leg.legendHandles:
               legobj.set_linewidth(1.0)
         for y in ax1.get_yticks()[1:]:
           ax1.text((clevelpdf[labloc1]*0.9+clevelpdf[labloc2]*0.1), y, y,fontsize=6,
           verticalalignment='center', horizontalalignment='left') #,
+        ax1.text(0.1, 0.1, 'Frequency ',fontsize=7,
+           verticalalignment='bottom', horizontalalignment='left',
+           transform=ax1.transAxes,rotation="vertical")
       else:
         ax1.get_legend().set_visible(False)
       if "cor" in data.method or "bias" in data.method:
