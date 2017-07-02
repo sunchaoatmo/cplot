@@ -428,6 +428,9 @@ cmap_hotcold18.set_over('blueviolet')
 cmap_hotcold18.set_under('black')
 cmap_WBGYR,WBGYR=buildcmp(WBGYR)
 sim_nicename={"ERI":"ERI",
+              "cor":"Inter-annual cor of",
+              "Xcor":"Cor between ori of",
+              "Xcorbias":"Cor between bias of",
              "RegCM":"RegCM4.6",
              "T2MAX":"T2X",
              "AT2M" :"T2M",
@@ -823,7 +826,7 @@ plotres['PrMAX']['violion']=True
 #plotres['PRAVG']['cleve3']=range(10)
 plotres['PRAVG']['cmp1']=cmap_cs_precp
 cmp   =plt.get_cmap('Spectral_r');cmp.set_over('maroon');cmp.set_under('w')
-plotres['PRAVG']['cmp3']=cmap_haxby #plt.get_cmap('jet')
+plotres['PRAVG']['cmp3']=cmap_WBGYR #plt.get_cmap('jet')
 plotres['PRAVG']['unit']="mm/day"
 plotres['PRAVG']['violion']=True
 
