@@ -32,8 +32,11 @@ class field(object):
         self.title[vname]="%s %s %s %s-%s"%(sim_nicename.get(self.method,self.method),
                                             self.period,vname,
                                             self.yb,self.ye)
-    if "Xcorbias"==self.method or "ets"==self.method or "cor"==self.method or "Tcor"==self.method or self.method=="rmse" or self.method=="diff" or "Taylor" in self.plottype:
+#    if "Xcorbias"==self.method or "ets"==self.method or "cor"==self.method or "Tcor"==self.method or self.method=="rmse" or self.method=="diff" or "Taylor" in self.plottype:
+#      self.plotlist.remove(self.obsname)
+    if not ("mean"==self.method and self.plottype=="contour"):
       self.plotlist.remove(self.obsname)
+
 
   def Output(self):
     pass
