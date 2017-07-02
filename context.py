@@ -166,30 +166,34 @@ class reginalmetfield(field):
       self.Ianalysis()
 
   def Ianalysis(self):
-    if self.tltype=="spatial":
-      self.spatialanalysis()
-    elif self.tltype=="temporal":
-      self.temporalanalysis()
+    Ianalysisdict={"spatial":self.spatialanalysis
+                 "temporal":self.temporalanalysis}
+    Ianalysisdict[self.tltype]()
 
   def Xanalysis(self):
     import numpy as np
     from constant import seasonname
     import cs_stat
     import numpy.ma as ma
-    for case in self.cases:
-      for vname in self.xvnames:
-        self.plotdata[case][vname]= np.zeros((4,self.nlat,self.nlon))
-        for k,name in enumerate(seasonname):
-          self.plotdata[case][vname][k]= cs_stat.cs_stat.xananual_ana(
-                                             sim1=self.data[case][vname[0]][:,k,:,:],
-                                             obs1=self.data[self.obsname][vname[0]][:,k,:,:],
-                                             sim2=self.data[case][vname[1]][:,k,:,:],
-                                             obs2=self.data[self.obsname][vname[1]][:,k,:,:],
-                                             mask=self.mask,
-                                             methodname=self.method ,
-                                             maskval=self.maskval  )
-        _, mask_b = np.broadcast_arrays(self.plotdata[case][vname], self.mask[None,...])
-        self.plotdata[case][vname]=ma.masked_array((self.plotdata[case][vname]), mask=mask_b)
+    [
+    self.xanalysis_inid(vname,case)
+    for vname in self.vnames
+    for case in self.plotlist 
+    ]
+
+  def xanalysis_inid(self,vname,case):
+    self.plotdata[case][vname]= np.zeros((4,self.nlat,self.nlon))
+    for k,name in enumerate(seasonname):
+      self.plotdata[case][vname][k]= cs_stat.cs_stat.xananual_ana(
+                                         sim1=self.data[case][vname[0]][:,k,:,:],
+                                         obs1=self.data[self.obsname][vname[0]][:,k,:,:],
+                                         sim2=self.data[case][vname[1]][:,k,:,:],
+                                         obs2=self.data[self.obsname][vname[1]][:,k,:,:],
+                                         mask=self.mask,
+                                         methodname=self.method ,
+                                         maskval=self.maskval  )
+    _, mask_b = np.broadcast_arrays(self.plotdata[case][vname], self.mask[None,...])
+    self.plotdata[case][vname]=ma.masked_array((self.plotdata[case][vname]), mask=mask_b)
 
 
 
@@ -199,14 +203,18 @@ class reginalmetfield(field):
     from constant import seasonname
     import cs_stat
     import sys
-    for vname in self.vnames:
-      for case in self.plotlist:
-        self.plotdata[case][vname]= np.zeros((int(self.nregs)+1,4,self.ye-self.yb+1,2))
-        self.plotdata[case][vname]= cs_stat.cs_stat.ananual_temp(
-                                             sim=self.data[case][vname],
-                                             obs=self.data[self.obsname][vname],
-                                             mask=self.mask,
-                                             maskval=self.maskval  ,regmap=self.regmap,nregs=int(self.nregs))
+    [ self.temporalanlysis_indi(vname,case)
+    for vname in self.vnames
+    for case in self.plotlist 
+    ]
+
+  def temporalanlysis_indi(self,vname,case):
+    #self.plotdata[case][vname]= np.zeros((int(self.nregs)+1,4,self.ye-self.yb+1,2))
+    self.plotdata[case][vname]= cs_stat.cs_stat.ananual_temp(
+                                         sim=self.data[case][vname],
+                                         obs=self.data[self.obsname][vname],
+                                         mask=self.mask,
+                                         maskval=self.maskval  ,regmap=self.regmap,nregs=int(self.nregs))
 
 
   def spatialanalysis(self):
@@ -215,63 +223,68 @@ class reginalmetfield(field):
     from constant import seasonname
     import cs_stat
     import sys
+
+    [self.analysiscase1(vname,case)  
+     for vname in self.vnames 
+     for case in self.plotlist 
+    ]
+    if "Taylor" in self.plottype:
+      [self.analysiscase2(vname) for vname in self.vnames]
+
+  def analysiscase1(self,vname,case):
+    if self.method=="eof":
+      from eofs.standard import eof
+      self.plotdata[case][vname]=[]
+      for k,name in enumerate(seasonname):
+        temp   =self.data[case][vname][:,k,:,:]
+        temp   =temp-temp.mean(axis=0)
+        solver = Eof(temp)
+        eofmap = solver.eofs(neofs=self.neof)
+        pcs    = solver.pcs(npcs=self.neof)
+        var    = solver.varianceFraction(neigs=self.neof)
+        self.plotdata[case][vname].append((eofmap,pcs,var))
+    else: #if self.method=="cor" or self.method=="rmse" or self.method=="trend" or self.method=="mean":
+      self.plotdata[case][vname]= np.zeros((4,self.nlat,self.nlon))
+      for k,name in enumerate(seasonname):
+        self.plotdata[case][vname][k]= cs_stat.cs_stat.ananual_ana(
+                                           sim=self.data[case][vname][:,k,:,:],
+                                           obs=self.data[self.obsname][vname][:,k,:,:],
+                                           mask=self.mask,
+                                           methodname=self.method ,
+                                           maskval=self.maskval  )
+      _, mask_b = np.broadcast_arrays(self.plotdata[case][vname], self.mask[None,...])
+      self.plotdata[case][vname]=ma.masked_array((self.plotdata[case][vname]), mask=mask_b)
+
+
+
+  def analysiscase2(self,vname):
     def taylorcalculator(obs,sim):
       stdrefs=ma.std(obs) #whether or not compressed has no impact on result
       std_sim=ma.std(sim)/stdrefs
       coef=np.corrcoef(sim,obs)
       return (std_sim,coef[0,1])
-
-    for vname in self.vnames:
-      for case in self.cases:
-        if self.method=="eof":
-          from eofs.standard import eof
-          self.plotdata[case][vname]=[]
-          for k,name in enumerate(seasonname):
-            temp   =self.data[case][vname][:,k,:,:]
-            temp   =temp-temp.mean(axis=0)
-            solver = Eof(temp)
-            eofmap = solver.eofs(neofs=self.neof)
-            pcs    = solver.pcs(npcs=self.neof)
-            var    = solver.varianceFraction(neigs=self.neof)
-            self.plotdata[case][vname].append((eofmap,pcs,var))
-        else: #if self.method=="cor" or self.method=="rmse" or self.method=="trend" or self.method=="mean":
-          self.plotdata[case][vname]= np.zeros((4,self.nlat,self.nlon))
-          for k,name in enumerate(seasonname):
-            self.plotdata[case][vname][k]= cs_stat.cs_stat.ananual_ana(
-                                               sim=self.data[case][vname][:,k,:,:],
-                                               obs=self.data[self.obsname][vname][:,k,:,:],
-                                               mask=self.mask,
-                                               methodname=self.method ,
-                                               maskval=self.maskval  )
-          _, mask_b = np.broadcast_arrays(self.plotdata[case][vname], self.mask[None,...])
-          self.plotdata[case][vname]=ma.masked_array((self.plotdata[case][vname]), mask=mask_b)
-
-
-
-      for case in self.plotlist:
-        if "Taylor" in self.plottype:
-          tempoutput=np.zeros((int(self.nregs)+1,len(seasonname),2))
-          for k,name in enumerate(seasonname):
-            tempoutput[0,k,:]=taylorcalculator(self.plotdata[self.obsname][vname][k,:,:].compressed(),
-                                               self.plotdata[case][vname][k,:,:].compressed())
-            for ireg in range(1,1+int(self.nregs)):
-              tempoutput[ireg,k,:]=taylorcalculator(self.plotdata[self.obsname][vname][k,self.regmap==ireg].compressed(),
-                                                    self.plotdata[case][vname][k,self.regmap==ireg].compressed())
-          self.plotdata[case][vname]=tempoutput
+    for case in self.plotlist:
+        tempoutput=np.zeros((int(self.nregs)+1,len(seasonname),2))
+        for k,name in enumerate(seasonname):
+          tempoutput[0,k,:]=taylorcalculator(self.plotdata[self.obsname][vname][k,:,:].compressed(),
+                                             self.plotdata[case][vname][k,:,:].compressed())
+          for ireg in range(1,1+int(self.nregs)):
+            tempoutput[ireg,k,:]=taylorcalculator(self.plotdata[self.obsname][vname][k,self.regmap==ireg].compressed(),
+                                                  self.plotdata[case][vname][k,self.regmap==ireg].compressed())
+        self.plotdata[case][vname]=tempoutput
 
   def Plot(self):
+    vnames=getattr(self,"xvnames",self.vnames)
     if self.plottype=="contour": # or self.plottype=="diff": 
-      for vname in getattr(self,"xvnames",self.vnames):
         if self.method=="eof":
           from cseof import eofplot
-          eofplot(self,vname)
+          [eofplot(self,vname) vnames]
         else:
           from cscontour import seasonalmap
-          seasonalmap(self,vname)
+          [seasonalmap(self,vname) vnames]
     elif self.plottype=="Taylor": 
       from cstaylor import seasonaltaylor
-      for vname in self.vnames:
-        seasonaltaylor(self,vname)
+      [seasonaltaylor(self,vname) self.vnames]
     elif self.plottype=="CTaylor": 
       from cstaylor import combinedtaylor
       combinedtaylor(self)
