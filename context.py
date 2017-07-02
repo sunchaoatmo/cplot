@@ -2,13 +2,15 @@ class field(object):
   def __init__(self,settings):
     from itertools import combinations
     from collections import defaultdict
-    from plotset     import tableau20
+    from plotset     import tableau20,sim_nicename
     for section,items in settings.iteritems():
       for key,value in items.iteritems():
        setattr(self,key,value)
     self.wrfinputfile="%s/wrfinput_d01"%self.datapath
     self.landmaskfile="%s/landmask.nc"%self.datapath
     self.casecolors  =dict(zip(self.cases,[tableau20[ic] for ic in self.colors]))
+    self.casealphas  =dict(zip(self.cases,self.alphas))
+    self.casezorders  =dict(zip(self.cases,self.zorders))
 
       
     self.plotlist =self.cases[:]
@@ -21,11 +23,16 @@ class field(object):
     if "X" in self.method:
       self.xvnames=[combined for combined in combinations(self.vnames, 2)] 
       for vname in self.xvnames:
-        self.title[vname]="%s vs %s cor %s-%s"%(vname[0],vname[1],self.yb,self.ye)
+        self.title[vname]="%s %s %s %s %s-%s"%( sim_nicename.get(self.method,self.method),
+                                              self.period,
+                                              vname[0],vname[1],
+                                              self.yb,self.ye)
     else:
       for vname in self.vnames:
-        self.title[vname]="%s %s %s-%s"%(vname,self.method if self.method!="mean" else "",self.yb,self.ye)
-    if "ets"==self.method or "cor"==self.method or "Tcor"==self.method or self.method=="rmse" or self.method=="diff" or "Taylor" in self.plottype:
+        self.title[vname]="%s %s %s %s-%s"%(sim_nicename.get(self.method,self.method),
+                                            self.period,vname,
+                                            self.yb,self.ye)
+    if "Xcorbias"==self.method or "ets"==self.method or "cor"==self.method or "Tcor"==self.method or self.method=="rmse" or self.method=="diff" or "Taylor" in self.plottype:
       self.plotlist.remove(self.obsname)
 
   def Output(self):
@@ -60,10 +67,10 @@ class reginalmetfield(field):
     for key,keyname in process_dict.iteritems():
        if "reg" in keyname:
          filenc=regmapnc
-         try:
+         if key=="regmap":
            setattr(self,key,filenc.variables[keyname][cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]])
-         except:
-           setattr(self,key,filenc.variables[keyname])
+         else:
+           setattr(self,key,filenc.variables[keyname][:])
        else:
          filenc=wrfinput
          setattr(self,key,filenc.variables[keyname][0,cutpoints[0]:-cutpoints[1],cutpoints[2]:-cutpoints[3]])
@@ -74,7 +81,24 @@ class reginalmetfield(field):
       self.mask= np.logical_not(self.mask)
 
     self.terrain =ma.masked_array(self.terrain,mask=self.mask)
+    masktemp=np.copy(self.mask[:])
+    masktemp[self.lon<100]=1
+    self.eastmask=masktemp
+    self.buildregmap()
+    #np.append(self.regmap,masktemp,axis=0)
+    self.regnames=[str("".join(name)) for name in self.regnames]
+    self.regnames.append("lon_gt_100")
 
+  def buildregmap(self):
+    import numpy as np
+    nx,ny=self.regmap.shape
+    nc=np.max(self.regmap)-1 #-1# actully it is plus one and then minus two regmap is starting from 1 and the last one is for the whole land also we need to subtract the last one for taiwan
+    regmask_new=np.ones((nc,nx,ny))
+    for i in range(nc):
+      regmask_new[i,self.regmap==i+1]=0
+    #regmask_new[-1,:,:]=self.eastmask
+    self.regmask_new=regmask_new
+    self.nregs=nc
 
   def d2p(outputdict,fnc):
     # watach out the dict is altered in this fun!!!
@@ -123,9 +147,9 @@ class reginalmetfield(field):
         dimsize=fnc.variables[vname].shape
 
         if len(dimsize)==5:
-          self.data[case][vname]=fnc.variables[vname][self.yb-YB:self.ye-YB,:,self.nlevel,self.cutpoints[0]:-self.cutpoints[1],self.cutpoints[2]:-self.cutpoints[3]]
+          self.data[case][vname]=fnc.variables[vname][self.yb-YB:1+self.ye-YB,:,self.nlevel,self.cutpoints[0]:-self.cutpoints[1],self.cutpoints[2]:-self.cutpoints[3]]
         elif len(dimsize)==4:
-          self.data[case][vname]=fnc.variables[vname][self.yb-YB:self.ye-YB,:,self.cutpoints[0]:-self.cutpoints[1],self.cutpoints[2]:-self.cutpoints[3]]
+          self.data[case][vname]=fnc.variables[vname][self.yb-YB:1+self.ye-YB,:,self.cutpoints[0]:-self.cutpoints[1],self.cutpoints[2]:-self.cutpoints[3]]
         elif len(dimsize)==3:
           d2p(self.data[case][vname],fnc.variables[vname])
         else:
