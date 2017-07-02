@@ -41,15 +41,26 @@ module cs_stat
 
     integer :: ncid, varid,dimid
     integer :: icell, iyear, ind,i,j,ipoint
+    integer :: dim_loc
     allocate(data_raw(nlon,nlat,ntime))
     allocate(data_temp(nlon,nlat,nday))
 
     print*,"Reading and anlysis daily:"//trim(filename)
     call check( nf90_open(FILENAME, NF90_NOWRITE, ncid) )
     call check( nf90_inq_varid(ncid, vname, varid) )
-    count(1:3) = (/ nlon, nlat, ntime/); 
-    start(1:3) = (/ 1+cutpoints(3)   , 1+cutpoints(1),   1/)
-    call check( nf90_get_var(ncid, varid, data_raw,start, count) )
+    call check( nf90_inquire(ncid, nDimensions=dim_loc))
+    call check( nf90_inq_varid(ncid, trim(vname), varid) )
+    if (dim_loc==3) then
+      print*,"old dataset"
+      start(1:3) = (/ 1+cutpoints(3)   , 1+cutpoints(1),   1/)
+      count(1:3) = (/ nlon, nlat, ntime/); 
+      call check( nf90_get_var(ncid, varid, data_raw,start(1:3), count(1:3)) )
+    elseif(dim_loc==4) then
+      start(1:4) = (/ 1+cutpoints(3)   , 1+cutpoints(1),    1,1/)
+      count(1:4) = (/ nlon, nlat, 1,ntime/); 
+      print*,"new dataset has an extra dim"
+      call check( nf90_get_var(ncid, varid, data_raw,start(1:4), count(1:4)) )
+    endif
     call check( nf90_close(ncid) )
     data_temp=0.0
     data_hovm=0.0
@@ -1086,19 +1097,25 @@ end subroutine
   end subroutine etscalculator_2d
 
 
-  subroutine Tananual_ana(obs,sim,mask,methodname,maskval,crts,ny,nx,nyears,nmonths,ncrt,cor,ets)
+  subroutine Tananual_ana(obs,sim,mask, &
+                          methodname,maskval,crts, &
+                          nreg,ny,nx,nyears,nmonths,ncrt, &
+                          cor,ets,regano,regmean,regstd)
     implicit none
-    integer,intent(in)               ::ny,nx,nyears,nmonths,ncrt
+    integer,intent(in)               ::nreg,ny,nx,nyears,nmonths,ncrt
     real,intent(in),dimension(nyears,nmonths,nx,ny)::obs
     real,intent(in),dimension(nyears,nmonths,nx,ny)::sim
-    real,intent(in),dimension(nx,ny)::mask
+    real,intent(in),dimension(nreg,nx,ny)::mask
     real,intent(in),dimension(ncrt) ::crts
     real,intent(in)                 ::maskval
     character (10),intent(in)   ::methodname
-    real,intent(out),dimension(nyears*nmonths),optional::cor
-    real,intent(out),dimension(ncrt,nyears*nmonths),optional::ets
+    real,intent(out),dimension(nyears*nmonths)       ::cor
+    real,intent(out),dimension(ncrt,nyears*nmonths)  ::ets
+    real,intent(out),dimension(nreg,nyears*nmonths)  ::regano
+    real,intent(out),dimension(nreg,nmonths)         ::regmean
+    real,intent(out),dimension(nreg,nmonths)         ::regstd
     !local 
-    integer :: t,m,y,icrt
+    integer :: t,m,y,icrt,npoints,i,j,ireg
     logical :: printted
     t=1
     if (trim(methodname)=="Tcor") then
@@ -1116,6 +1133,59 @@ end subroutine
          enddo
         t=t+1
        end do
+      end do
+    elseif (trim(methodname)=="mean") then
+      regano(:,:)=0.0
+      regmean(:,:)=0.0
+      regstd(:,:)=0.0
+      do ireg=1,nreg
+        npoints=0
+        do j=1,ny
+          do i=1,nx
+            if (mask(ireg,i,j)==maskval.and.sim(1,1,i,j).lt.1000) then
+              t=1
+              do y=1,nyears
+                do m=1,nmonths
+                    regano(ireg,t)=regano(ireg,t)+sim(y,m,i,j)
+                    t=t+1
+                end do
+              end do
+              npoints  =npoints+1
+            endif
+          end do
+        end do
+        if(npoints>0) then
+          regano(ireg,:)=regano(ireg,:)/npoints
+        endif
+        if (maxval(regano(ireg,:)).gt.1000) then
+          print*,"ireg:",ireg,"has abnormal",npoints !regano(ireg,:)
+        do j=1,ny
+          do i=1,nx
+            if (mask(ireg,i,j)==maskval.and.sim(1,1,i,j).lt.1000) then
+              print*,sim(1,1,i,j),i,j
+            endif
+          end do
+        end do
+        endif
+
+        do m=1,nmonths
+          call avevar(regano(ireg,m::nmonths),nyears,regmean(ireg,m),regstd(ireg,m))
+          regstd(ireg,m)=sqrt(regstd(ireg,m))
+        enddo
+        
+        t=1
+        do y=1,nyears
+          do m=1,nmonths
+              if (abs(regstd(ireg,m))>0.000001) then
+                regano(ireg,t)=(regano(ireg,t)-regmean(ireg,m))/regstd(ireg,m)
+                !regano(ireg,t)=(regano(ireg,t)-regmean(ireg,m))/regstd(ireg,m)
+              else
+                stop
+              endif
+              t=t+1
+          end do
+        end do
+ 
       end do
     else
       print*,"not a valide method name for X analysis, you choose:",methodname
@@ -1269,6 +1339,51 @@ end subroutine
     rmse_1d=sqrt(sum(diffsqre)/nt)
   end function rmse_1d
 
+!  SUBROUTINE avevar(data,n,ave,var)
+!    INTEGER n
+!    REAL ave,var,data(n)
+!    !Given array data(1:n), returns its mean as ave and its variance as var.
+!    INTEGER j
+!    REAL s,ep
+!    ave=0.0
+!    do  j=1,n
+!    ave=ave+data(j)
+!    enddo 
+!    ave=ave/n
+!    var=0.0
+!    ep=0.0
+!    do  j=1,n
+!    s=data(j)-ave
+!    ep=ep+s
+!    var=var+s*s
+!    enddo 
+!    var=(var-ep**2/n)/(n-1) !Corrected two-pass formula (14.1.8).
+!    return
+!  END SUBROUTINE avevar
+
+
+  SUBROUTINE avevar(data,n,ave,var)
+    INTEGER n
+    REAL ave,var,data(n)
+    !Given array data(1:n), returns its mean as ave and its variance as var.
+    INTEGER j
+    REAL s,ep
+    ave=0.0
+    do  j=1,n
+    ave=ave+data(j)
+    enddo 
+    ave=ave/n
+    var=0.0
+    ep=0.0
+    do  j=1,n
+    s=data(j)-ave
+    ep=ep+s
+    var=var+s*s
+    enddo 
+    var=(var-ep**2/n)/(n-1) !Corrected two-pass formula (14.1.8).
+    var=sum((data-ave)*(data-ave))/n
+    return
+  END SUBROUTINE avevar
 
   real function corrcoef_1d(x,y,n)
     implicit none
