@@ -11,6 +11,8 @@ class field(object):
     self.casecolors  =dict(zip(self.cases,[tableau20[ic] for ic in self.colors]))
     self.casealphas  =dict(zip(self.cases,self.alphas))
     self.casezorders  =dict(zip(self.cases,self.zorders))
+    self.caselinestyles  =dict(zip(self.cases,[ls[1:-1] for ls in self.linestyles]))
+    self.caseannu_begs  =dict(zip(self.cases,self.annu_begs))
 
       
     self.plotlist =self.cases[:]
@@ -22,16 +24,16 @@ class field(object):
     self.title   ={}
     if "X" in self.method:
       self.xvnames=[combined for combined in combinations(self.vnames, 2)] 
-      [ self.title[vname]="%s %s %s %s %s-%s"%( sim_nicename.get(self.method,self.method),
+      self.title={vname:"%s %s %s %s %s-%s"%( sim_nicename.get(self.method,self.method),
                                               self.period,
                                               vname[0],vname[1],
                                               self.yb,self.ye)
-      for vname in self.xvnames]
+      for vname in self.xvnames}
     else:
-      [  self.title[vname]="%s %s %s %s-%s"%(sim_nicename.get(self.method,self.method),
+      self.title={vname:"%s %s %s %s-%s"%(sim_nicename.get(self.method,self.method),
                                             self.period,vname,
                                             self.yb,self.ye)
-      for vname in self.vnames ]
+      for vname in self.vnames }
 #    if "Xcorbias"==self.method or "ets"==self.method or "cor"==self.method or "Tcor"==self.method or self.method=="rmse" or self.method=="diff" or "Taylor" in self.plottype:
 #      self.plotlist.remove(self.obsname)
     if not ("mean"==self.method and self.plottype=="contour"):
