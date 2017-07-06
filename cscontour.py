@@ -73,6 +73,7 @@ def seasonalmap(data,vname,crt=-9999):
     contourfilename+=str(crt)
   extend="both"
   lefttick,righttick,legloc,labloc1,labloc2,ndx="on","off",2,0,1,1
+  lefttick,righttick,legloc,labloc1,labloc2,ndx,xloc="on","off",1,0,1,1,0.1
   if "cor" in data.method:
     lefttick,righttick,legloc,labloc1,labloc2,ndx="on","off",2,0,1,1
     suptitle=data.title[vname]
@@ -89,8 +90,13 @@ def seasonalmap(data,vname,crt=-9999):
     clevel2=[x*2 for x in range(-10,11)]
     clevel.remove(0)
   elif data.method=="ets":
+    xloc=0.8
     extend="both"
-    suptitle="ETS %s crt=%s"%(data.title[vname],crt)
+    icrt=data.crts_level.index(crt)
+    if icrt<len(data.crts_level)-1:
+      suptitle="%s crt=%s-%s"%(data.title[vname],data.crts_level[icrt],data.crts_level[icrt+1])
+    else:
+      suptitle="%s crt=%s above"%(data.title[vname],crt)
     cmp   =cmap_WBGYR;cmp.set_under('white')
     clevel=data.ets_level
     lefttick,righttick,legloc,labloc1,labloc2,ndx="off","on",2,-2,-1,2
@@ -108,7 +114,6 @@ def seasonalmap(data,vname,crt=-9999):
     pp = PdfPages(contourfilename+'.pdf')
   else:
     page=0
-  legloc=0
 
   
   fig.suptitle(suptitle, fontsize=12, fontweight='bold')
@@ -147,6 +152,7 @@ def seasonalmap(data,vname,crt=-9999):
       ax1.yaxis.set_minor_locator(minorLocator)
       plt.yticks(ax1.get_yticks(),"")
       if k==0:
+        #leg=ax1.legend(loc=legloc,mode="expand",handlelength=0.5,borderaxespad=0.,frameon=False,   fontsize=6)
         leg=ax1.legend(bbox_to_anchor=(0.05,0.92,0.01,0.03),mode="expand",handlelength=0.5,borderaxespad=0.,frameon=False,   fontsize=6)
         #leg=ax1.legend(bbox_to_anchor=(0.57,0.92,0.01,0.03),mode="expand",handlelength=0.5,borderaxespad=0.,frameon=False,   fontsize=6)
         #leg=ax1.legend(bbox_to_anchor=(0.5,0.92,0.01,0.03),borderaxespad=0.,frameon=False,   fontsize=6)
@@ -157,7 +163,7 @@ def seasonalmap(data,vname,crt=-9999):
         for y in ax1.get_yticks()[1:]:
           ax1.text((clevelpdf[labloc1]*0.9+clevelpdf[labloc2]*0.1), y, y,fontsize=6,
           verticalalignment='center', horizontalalignment='left') #,
-        ax1.text(0.1, 0.1, 'Frequency ',fontsize=7,
+        ax1.text(xloc, 0.1, 'Frequency ',fontsize=7,
            verticalalignment='bottom', horizontalalignment='left',
            transform=ax1.transAxes,rotation="vertical")
       else:
