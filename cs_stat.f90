@@ -170,6 +170,7 @@ module cs_stat
     integer :: dim_loc
     integer :: beg_cur,icrt,it,lastindex_s 
     integer, dimension(ntime):: tindex_sim,tindex_obs
+    real    :: crt_lo,crt_up
 
     print*,"nlon=",nlon,"nlat=",nlat
     print*,"cutpoints=",cutpoints
@@ -286,15 +287,25 @@ module cs_stat
         enddo 
         if (trim(methodname)=="ets") then
           lastindex_s=beg_cur-1
-          print*,"There are ",lastindex_s," days in season"
+          print*,"there are ",lastindex_s," days in season"
           do i=1,nlat
             do j=1,nlon
               if (mask(i,j)==maskval) then
                 do icrt=1,ncrt
-                  call etscalculator_1d(obs=data_obs(j,i,tindex_obs(1:lastindex_s)), &
-                                        sim=data_sim(j,i,tindex_sim(1:lastindex_s)), &
-                                        crt=crts(icrt),               &
-                                        ets=ets_output(icrt,i,j,iperiod,icase),nt=lastindex_s)
+                  crt_lo=crts(icrt)
+                  if (icrt<ncrt) then
+                    crt_up=crts(icrt+1)
+                    call etscalculator_1d(obs=data_obs(j,i,tindex_obs(1:lastindex_s)), &
+                                          sim=data_sim(j,i,tindex_sim(1:lastindex_s)), &
+                                          crt_lo=crt_lo,               &
+                                          crt_up=crt_up,               &
+                                          ets=ets_output(icrt,i,j,iperiod,icase),nt=lastindex_s)
+                  else
+                    call etscalculator_1d(obs=data_obs(j,i,tindex_obs(1:lastindex_s)), &
+                                          sim=data_sim(j,i,tindex_sim(1:lastindex_s)), &
+                                          crt_lo=crt_lo,               &
+                                          ets=ets_output(icrt,i,j,iperiod,icase),nt=lastindex_s)
+                  endif
                 enddo
               else
                 ets_output(:,i,j,iperiod,icase)=0.0
@@ -1012,11 +1023,12 @@ end subroutine
     endif
   end subroutine xananual_ana
 
-  subroutine etscalculator_1d(obs,sim,crt,ets,nt)
+  subroutine etscalculator_1d(obs,sim,crt_lo,crt_up,ets,nt)
     implicit none
     integer,intent(in)               ::nt
     real,intent(in),dimension(nt)::obs,sim
-    real,intent(in)                 ::crt 
+    real,intent(in)                 ::crt_lo 
+    real,intent(in),optional        ::crt_up 
     real,intent(out)                ::ets
     !local 
     integer :: t
@@ -1027,14 +1039,27 @@ end subroutine
     d=0.0
     ets=0.0
     do t=1,nt
-      if(obs(t)>=crt.and.sim(t)>=crt)then
-        a=a+1
-      elseif(obs(t)<crt.and.sim(t)>=crt)then
-        b=b+1
-      elseif(obs(t)>=crt.and.sim(t)<crt)then
-        c=c+1
-      elseif(obs(t)<crt.and.sim(t)<crt)then
-        d=d+1
+      if (present(crt_up)) then
+        if((crt_up>=obs(t).and. obs(t)>=crt_lo)    .and.(crt_up>=sim(t).and. sim(t)>=crt_lo))then
+          a=a+1
+        elseif((crt_up< obs(t).or. obs(t)< crt_lo) .and.(crt_up>=sim(t).and. sim(t)>=crt_lo))then
+          b=b+1
+        elseif((crt_up>=obs(t).and. obs(t)>=crt_lo).and.(crt_up< sim(t).or. sim(t)< crt_lo))then
+          c=c+1
+        elseif((crt_up< obs(t).or. obs(t)< crt_lo) .and.(crt_up< sim(t).or. sim(t)< crt_lo))then
+          d=d+1
+        endif
+      else
+        if(obs(t)>=crt_lo.and.sim(t)>=crt_lo)then
+          a=a+1
+        elseif(obs(t)<crt_lo.and.sim(t)>=crt_lo)then
+          b=b+1
+        elseif(obs(t)>=crt_lo.and.sim(t)<crt_lo)then
+          c=c+1
+        elseif(obs(t)<crt_lo.and.sim(t)<crt_lo)then
+          d=d+1
+        endif
+
       endif
     end do
     ar=(a+b)*(a+c)/nt
@@ -1048,13 +1073,14 @@ end subroutine
 
   end subroutine etscalculator_1d
 
-  subroutine etscalculator_2d(obs,sim,crt,ets,nx,ny,mask,maskval)
+  subroutine etscalculator_2d(obs,sim,crt_lo,crt_up,ets,nx,ny,mask,maskval)
     implicit none
     integer,intent(in)               ::nx,ny
     real,intent(in),dimension(nx,ny)::obs,sim
     real,intent(in)                 ::maskval
     real,intent(in),dimension(nx,ny)::mask
-    real,intent(in)                 ::crt 
+    real,intent(in)                 ::crt_lo 
+    real,intent(in),optional        ::crt_up 
     real,intent(out)                ::ets
     !local 
     integer :: i,j,npoints
@@ -1069,14 +1095,27 @@ end subroutine
       do i=1,nx
         if (mask(i,j)==maskval) then
           npoints=npoints+1
-          if(obs(i,j)>=crt.and.sim(i,j)>=crt)then
-            a=a+1
-          elseif(obs(i,j)<crt.and.sim(i,j)>=crt)then
-            b=b+1
-          elseif(obs(i,j)>=crt.and.sim(i,j)<crt)then
-            c=c+1
-          elseif(obs(i,j)<crt.and.sim(i,j)<crt)then
-            d=d+1
+          if (present(crt_up)) then
+            if((crt_up>=obs(i,j).and. obs(i,j)>=crt_lo)    .and.(crt_up>=sim(i,j).and. sim(i,j)>=crt_lo))then
+              a=a+1
+            elseif((crt_up< obs(i,j).or. obs(i,j)< crt_lo) .and.(crt_up>=sim(i,j).and. sim(i,j)>=crt_lo))then
+              b=b+1
+            elseif((crt_up>=obs(i,j).and. obs(i,j)>=crt_lo).and.(crt_up< sim(i,j).or. sim(i,j)< crt_lo))then
+              c=c+1
+            elseif((crt_up< obs(i,j).or. obs(i,j)< crt_lo) .and.(crt_up< sim(i,j).or. sim(i,j)< crt_lo))then
+              d=d+1
+            endif
+          else
+
+            if(obs(i,j)>=crt_lo.and.sim(i,j)>=crt_lo)then
+              a=a+1
+            elseif(obs(i,j)<crt_lo.and.sim(i,j)>=crt_lo)then
+              b=b+1
+            elseif(obs(i,j)>=crt_lo.and.sim(i,j)<crt_lo)then
+              c=c+1
+            elseif(obs(i,j)<crt_lo.and.sim(i,j)<crt_lo)then
+              d=d+1
+            endif
           endif
         end if
       end do
@@ -1117,6 +1156,7 @@ end subroutine
     !local 
     integer :: t,m,y,icrt,npoints,i,j,ireg
     logical :: printted
+    real    :: crt_lo,crt_up
     t=1
     if (trim(methodname)=="Tcor") then
       do y=1,nyears
@@ -1129,7 +1169,13 @@ end subroutine
       do y=1,nyears
        do m=1,nmonths
          do icrt=1,ncrt
-          call etscalculator_2d(obs(y,m,:,:),sim(y,m,:,:),crts(icrt),ets(icrt,t),nx,ny,mask,maskval)
+           crt_lo=crts(icrt)
+           if (icrt<ncrt) then
+             crt_up=crts(icrt+1)
+             call etscalculator_2d(obs=obs(y,m,:,:),sim=sim(y,m,:,:),crt_up=crt_up,crt_lo=crt_lo,ets=ets(icrt,t),nx=nx,ny=ny,mask=mask,maskval=maskval)
+           else
+             call etscalculator_2d(obs=obs(y,m,:,:),sim=sim(y,m,:,:),crt_lo=crt_lo,ets=ets(icrt,t),nx=nx,ny=ny,mask=mask,maskval=maskval)
+           endif
          enddo
         t=t+1
        end do
@@ -1198,18 +1244,22 @@ end subroutine
 
 
 
-  subroutine ananual_ana(obs,sim,mask,methodname,maskval,nt,nx,ny,output)
+  subroutine ananual_ana(obs,sim,mask,methodname,maskval,nt,nx,ny,ncrt,crts,output,ets_3d)
     integer,intent(in)               ::nt,nx,ny
     real,intent(in),dimension(nt,nx,ny)::obs
     real,intent(in),dimension(nt,nx,ny)::sim
+    integer,intent(in) :: ncrt     ! total number of crts
     real,intent(in),dimension(nx,ny)::mask
     character (5),intent(in)   ::methodname
     real,intent(out),dimension(nx,ny)::output
+    real ,dimension(ncrt,nx,ny),intent(out)             ::ets_3d
+    real               ,dimension(ncrt),intent(in)            ::crts
     real,intent(in)                 ::maskval
     !local 
     real,dimension(nt)::x,sig
     real::a,b,siga,sigb,chi2,q
-    integer :: mwt,i,j,k
+    integer :: icrt,mwt,i,j,k
+    real    :: crt_lo,crt_up
     logical :: printted
     if (trim(methodname)=="cor") then
       do j=1,ny
@@ -1272,6 +1322,32 @@ end subroutine
           end if
         end do
       end do
+    elseif (trim(methodname)=="ets") then
+      do j=1,ny
+        do i=1,nx
+          if (mask(i,j)==maskval) then
+            do icrt=1,ncrt
+              crt_lo=crts(icrt)
+              if (icrt<ncrt) then
+                crt_up=crts(icrt+1)
+                call etscalculator_1d(obs=obs(:,i,j), &
+                                      sim=sim(:,i,j), &
+                                      crt_lo=crt_lo,               &
+                                      crt_up=crt_up,               &
+                                      ets=ets_3d(icrt,i,j),nt=nt)
+              else
+                call etscalculator_1d(obs=obs(:,i,j), &
+                                      sim=sim(:,i,j), &
+                                      crt_lo=crt_lo,               &
+                                      ets=ets_3d(icrt,i,j),nt=nt)
+              endif
+            enddo
+          else
+            ets_3d(:,i,j)=0.0
+          endif
+        enddo 
+      enddo 
+
 
     endif
   end subroutine ananual_ana
