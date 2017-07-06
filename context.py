@@ -197,8 +197,7 @@ class reginalmetfield(field):
                                          mask=self.mask,
                                          methodname=self.method ,
                                          maskval=self.maskval  )
-    _, mask_b = np.broadcast_arrays(self.plotdata[case][vname], self.mask[None,...])
-    self.plotdata[case][vname]=ma.masked_array((self.plotdata[case][vname]), mask=mask_b)
+    self.csmask(case,vname)
 
 
 
@@ -263,8 +262,7 @@ class reginalmetfield(field):
           self.plotdata[case+"crts"][vname][:,k,:,:]=ets
         else:
           self.plotdata[case][vname][k]=temp
-      _, mask_b = np.broadcast_arrays(self.plotdata[case][vname], self.mask[None,...])
-      self.plotdata[case][vname]=ma.masked_array((self.plotdata[case][vname]), mask=mask_b)
+      self.csmask(case,vname)
 
 
 
@@ -288,6 +286,9 @@ class reginalmetfield(field):
                                                   self.plotdata[case][vname][k,self.regmap==ireg].compressed())
     for case in self.plotlist:
         self.plotdata[case][vname]=tempoutput[case]
+  def csmask(self,case,vname):
+    _, mask_b = np.broadcast_arrays(self.plotdata[case][vname], self.mask[None,...])
+    self.plotdata[case][vname]=ma.masked_array((self.plotdata[case][vname]), mask=mask_b)
 
   def crtplot(self,vname,icrt,crt):
     from cscontour import seasonalmap
@@ -295,8 +296,7 @@ class reginalmetfield(field):
     import numpy as np
     for case in self.plotlist:
       self.plotdata[case][vname]=self.plotdata[case+"crts"][vname][icrt]
-      _, mask_b = np.broadcast_arrays(self.plotdata[case][vname], self.mask[None,...])
-      self.plotdata[case][vname]=ma.masked_array((self.plotdata[case][vname]), mask=mask_b)
+      self.csmask(case,vname)
     seasonalmap(self,vname,crt)
 
   def Plot(self):
