@@ -136,6 +136,8 @@ class daily_data(reginalmetfield):
                        beg_nday=beg_nday,end_nday=end_nday,             
                        mask=self.mask,maskval=self.maskval,nlandpoints=nlandpoints,      
                        regmap=self.regmap,                        
+                       cutpoints=self.cutpoints,
+                       crts=self.crts_level,
                        n_bin=self.n_bin,x_min=self.x_min,x_max=self.x_max)
           self.plotdata["all"][vname]=pdf
         pickle.dump( self.plotdata, open(filenamep, "wb" ) )
