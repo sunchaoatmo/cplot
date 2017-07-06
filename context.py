@@ -30,7 +30,7 @@ class field(object):
                                               self.yb,self.ye)
       for vname in self.xvnames}
     else:
-      self.title={vname:"%s %s %s %s-%s"%(sim_nicename.get(self.method,self.method),
+      self.title={vname:"%s %s %s %s-%s"%(sim_nicename.get(self.method,self.method).upper(),
                                             self.period,vname,
                                             self.yb,self.ye)
       for vname in self.vnames }
@@ -249,13 +249,20 @@ class reginalmetfield(field):
         self.plotdata[case][vname].append((eofmap,pcs,var))
     else: #if self.method=="cor" or self.method=="rmse" or self.method=="trend" or self.method=="mean":
       self.plotdata[case][vname]= np.zeros((4,self.nlat,self.nlon))
+      if self.method=="ets":
+        self.plotdata[case+"crts"][vname]= np.zeros((len(self.crts_level),4,self.nlat,self.nlon))
       for k,name in enumerate(seasonname):
-        self.plotdata[case][vname][k]= cs_stat.cs_stat.ananual_ana(
-                                           sim=self.data[case][vname][:,k,:,:],
+        temp,ets= cs_stat.cs_stat.ananual_ana(
                                            obs=self.data[self.obsname][vname][:,k,:,:],
+                                           sim=self.data[case][vname][:,k,:,:],
                                            mask=self.mask,
                                            methodname=self.method ,
-                                           maskval=self.maskval  )
+                                           maskval=self.maskval  ,
+                                           crts=self.crts_level)
+        if self.method=="ets":
+          self.plotdata[case+"crts"][vname][:,k,:,:]=ets
+        else:
+          self.plotdata[case][vname][k]=temp
       _, mask_b = np.broadcast_arrays(self.plotdata[case][vname], self.mask[None,...])
       self.plotdata[case][vname]=ma.masked_array((self.plotdata[case][vname]), mask=mask_b)
 
@@ -282,15 +289,30 @@ class reginalmetfield(field):
     for case in self.plotlist:
         self.plotdata[case][vname]=tempoutput[case]
 
+  def crtplot(self,vname,icrt,crt):
+    from cscontour import seasonalmap
+    import numpy.ma as ma
+    import numpy as np
+    for case in self.plotlist:
+      self.plotdata[case][vname]=self.plotdata[case+"crts"][vname][icrt]
+      _, mask_b = np.broadcast_arrays(self.plotdata[case][vname], self.mask[None,...])
+      self.plotdata[case][vname]=ma.masked_array((self.plotdata[case][vname]), mask=mask_b)
+    seasonalmap(self,vname,crt)
+
   def Plot(self):
     vnames=getattr(self,"xvnames",self.vnames)
     if self.plottype=="contour": # or self.plottype=="diff": 
-        if self.method=="eof":
-          from cseof import eofplot
-          [eofplot(self,vname) for vname in vnames]
-        else:
-          from cscontour import seasonalmap
-          [seasonalmap(self,vname) for vname in  vnames]
+      if self.method=="eof":
+        from cseof import eofplot
+        [eofplot(self,vname) for vname in vnames]
+      elif self.method=="ets":
+        from constant import seasonname
+        [self.crtplot(vname,icrt,crt)
+          for icrt,crt    in enumerate(self.crts_level)
+          for vname in  vnames]
+      else:
+        from cscontour import seasonalmap
+        [seasonalmap(self,vname) for vname in  vnames]
     elif self.plottype=="Taylor": 
       from cstaylor import seasonaltaylor
       [seasonaltaylor(self,vname) for vname in self.vnames]
