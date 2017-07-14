@@ -15,7 +15,7 @@ class field(object):
     self.caseannu_begs  =dict(zip(self.cases,self.annu_begs))
 
       
-    self.plotlist =self.cases[:]
+    #self.plotlist =self.cases[:]
     self.data    =defaultdict(dict)
     self.filename=defaultdict(dict)
     self.time    =defaultdict(dict)
@@ -36,8 +36,8 @@ class field(object):
       for vname in self.vnames }
 #    if "Xcorbias"==self.method or "ets"==self.method or "cor"==self.method or "Tcor"==self.method or self.method=="rmse" or self.method=="diff" or "Taylor" in self.plottype:
 #      self.plotlist.remove(self.obsname)
-    if not ("mean"==self.method and self.plottype=="contour"):
-      self.plotlist.remove(self.obsname)
+#    if not ("mean"==self.method and self.plottype=="contour"):
+#      self.plotlist.remove(self.obsname)
 
 
   def Output(self):
@@ -91,7 +91,7 @@ class reginalmetfield(field):
     self.buildregmap()
     #np.append(self.regmap,masktemp,axis=0)
     self.regnames=[str("".join(name)) for name in self.regnames]
-    self.regnames.append("lon_gt_100")
+    self.nregs=len(self.regnames)
 
   def buildregmap(self):
     import numpy as np
@@ -287,6 +287,8 @@ class reginalmetfield(field):
     for case in self.plotlist:
         self.plotdata[case][vname]=tempoutput[case]
   def csmask(self,case,vname):
+    import numpy as np
+    import numpy.ma as ma
     _, mask_b = np.broadcast_arrays(self.plotdata[case][vname], self.mask[None,...])
     self.plotdata[case][vname]=ma.masked_array((self.plotdata[case][vname]), mask=mask_b)
 
