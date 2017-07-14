@@ -29,7 +29,7 @@ def readini():
   settings=defaultdict(dict)
   config = ConfigParser.ConfigParser()
   config.read('plot.ini')
-  sections=["MAIN","Timeserial","EOF","Parameter","Hovmoller","PDF","PLOT","Taylor","Time_control","ETS"]
+  sections=["MAIN","Timeserial","EOF","Parameter","Hovmoller","PDF","PLOT","Taylor","Time_control","ETS","Regional"]
   for section in sections:
     retrivesetting(config,section,settings[section])
   return settings
