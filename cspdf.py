@@ -28,14 +28,16 @@ def pdfplot(data,vname):
   fig=plt.figure(figsize=(6, 8))
   props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
   sns.set_style("ticks", {"xtick.major.size": 3, "ytick.major.size": 3})
-  locx=0.7  #bin[-1]*0.9
-  locy=17.0 #1e-1.6 #0.5
-  linewidth=0.5
+  locx=0.5  #bin[-1]*0.9
+  locy=0.8 #1e-1.6 #0.5
+  linewidth=0.3
   linestyle='-'   #LINEstyel[k1//6]  #'-'
   ms=1;ms0=2
+  print(data.regnames)
   for plotmethod in plotmethodlist:
     for ireg,regname in enumerate(data.regnames): 
       for iseason,season in enumerate(seasonname):
+        #print(ireg,iseason)
         ax1 = plt.subplot(gs1[iseason+ireg*4])
         ax1.grid(True)
         gridlines = ax1.get_ygridlines()+ ax1.get_xgridlines()
@@ -45,16 +47,11 @@ def pdfplot(data,vname):
         for axis in ['top','bottom','left','right']:
           ax1.spines[axis].set_linewidth(0.01)
         if ireg==0:
-          ax1.text(locx, locy, season, color='black', fontsize=6, bbox=props,ha='center',weight='bold',family='monospace')
+          ax1.text(locx, locy, season, transform=ax1.transAxes,color='black', fontsize=6, bbox=props,ha='center',weight='bold',family='monospace')
         for icase,case in enumerate( data.plotlist):
-          if case==data.obsname:
-            color='k'
-            label="Obs"
-          else:
-            linestyle="-"
-            linewidth=0.8
+          color=data.casecolors[case]  #tableau20[2*(casenumber-1)] 
           plotmethod(x_axis,data.plotdata["all"][vname][:,ireg,iseason,icase]*100,linewidth=linewidth, linestyle=linestyle,
-                   color=tableau20[2+2*icase],markersize=ms0,label=sim_nicename[case])
+                   color=color,markersize=ms0,label=sim_nicename[case])
         if ireg==0 and iseason==3:
           print("plot legend")
           ax1.legend(fontsize=4.2,bbox_to_anchor=(1.03,1),loc=2,borderaxespad=0.)
