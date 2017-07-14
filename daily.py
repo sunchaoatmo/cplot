@@ -87,6 +87,7 @@ class daily_data(reginalmetfield):
         self.plotdata= pickle.load( open( filenamep, "rb" ) )
       except:
         for case in self.cases:
+          print(case)
           for vname in self.vnames:
             units   =self.time[case][vname].units
             calendar=self.time[case][vname].calendar
@@ -107,7 +108,7 @@ class daily_data(reginalmetfield):
         pickle.dump( self.plotdata, open(filenamep, "wb" ) )
 
 
-    if "pdf" in self.plottype:
+    if "dist" in self.plottype or "ets"==self.method:
       import cPickle as pickle
       filenamep=self.plotname+"_dat.p"
       try:
@@ -118,11 +119,20 @@ class daily_data(reginalmetfield):
         nlandpoints=np.sum(self.mask)
         nyears=self.ye-self.yb+1
         for vname in self.vnames:
-          obsfilename=self.filename[self.obsname][vname]
+          """
           filenamelen = np.max(np.array([ len(self.filename[case][vname]) for case in self.cases if case!=self.obsname]))
           filenamea = [ self.filename[case][vname]+(filenamelen-len(self.filename[case][vname]))*" " 
                          for case in self.cases if case!=self.obsname]
+          obsfilename=self.filename[self.obsname][vname]
           filename = np.array(filenamea,dtype=str(filenamelen)+'c').T
+          """
+          filenames=[self.filename[case][vname] for case in self.cases if case!=self.obsname]
+          end_chs=[len(filename) for filename in filenames]
+          end_chs=np.cumsum(end_chs)
+          beg_chs=[1]
+          beg_chs.extend([x+1 for x in end_chs[:-1]])
+          filenames="".join(filenames)
+          obsfilename=self.filename[self.obsname][vname]
           units   =self.time[self.obsname][vname].units
           calendar=self.time[self.obsname][vname].calendar
           beg_nday,end_nday=select_beg_end(self.yb,self.ye,nperiods,units,calendar)
@@ -130,17 +140,24 @@ class daily_data(reginalmetfield):
           pdf,ets=cs_stat.cs_stat.pdf_cor_rms(
                        ana_yearly=self.ana_yearly,methodname=self.method,vname=vname,
                        nlat=self.nlat,nlon=self.nlon,nregs=self.nregs,               
-                       filename=filename,obsfilename=obsfilename,          
-                       filenamelen=filenamelen,
+                       filename=filenames,obsfilename=obsfilename,          
+                       ch_ends=end_chs,ch_begs=beg_chs,
                        ntime=ntime   ,nperiods=nperiods,nyears=nyears,ncases=ncases,  
                        beg_nday=beg_nday,end_nday=end_nday,             
                        mask=self.mask,maskval=self.maskval,nlandpoints=nlandpoints,      
                        regmap=self.regmap,                        
                        cutpoints=self.cutpoints,
                        crts=self.crts_level,
+                       #pdfcrt=self.pdfcrt,
                        n_bin=self.n_bin,x_min=self.x_min,x_max=self.x_max)
-          self.plotdata["all"][vname]=pdf
+
+          if "ets" in self.method:
+            self.plotdata["all"][vname]=ets
+          else:
+            self.plotdata["all"][vname]=pdf
+
         pickle.dump( self.plotdata, open(filenamep, "wb" ) )
+    """ 
 
     if "ets" in self.method:
       import cPickle as pickle
@@ -176,6 +193,7 @@ class daily_data(reginalmetfield):
                        crts=self.crts_level)
           self.plotdata["all"][vname]=ets
         pickle.dump( self.plotdata, open(filenamep, "wb" ) )
+    """ 
 
 
   def Plot(self):
@@ -183,7 +201,7 @@ class daily_data(reginalmetfield):
       if "Hovmoller" in self.plottype:
         from cshov import hovplot
         hovplot(self,vname)
-      elif "pdf" in self.plottype:
+      elif "dist" in self.plottype:
         from cspdf import pdfplot
         pdfplot(self,vname)
       elif "ets" in self.method:

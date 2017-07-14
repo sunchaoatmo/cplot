@@ -94,6 +94,8 @@ module cs_stat
         data_hovm(icell,:)=data_hovm(icell,:)/numpoint
       endif
     enddo
+    deallocate(data_raw)
+    deallocate(data_temp)
   contains
     subroutine check(status)
       integer, intent ( in) :: status
@@ -109,7 +111,7 @@ module cs_stat
 
   subroutine pdf_cor_rms(ana_yearly,methodname,vname,&
                          filename,obsfilename,          &
-                         filenamelen,                   &
+                         ch_begs,ch_ends,               &
                          nlat,nlon,nregs,               &
                          cutpoints,                     &
                          ntime,nperiods,nyears,ncases,  &
@@ -123,13 +125,14 @@ module cs_stat
 
     implicit none
     integer      ,intent(in)   ::ana_yearly  ! whether we will output yearly pdf analysis
-    integer      ,intent(in)   ::filenamelen
+    integer,dimension(ncases-1)      ,intent(in)   ::ch_begs,ch_ends
+    !integer      ,intent(in)   ::filenamelen
     character (4),intent(in)   ::methodname
     integer,dimension(4),  intent(in)  :: cutpoints
     character (len = *), intent(in):: vname 
-    character (len =filenamelen),                  intent(in):: obsfilename
-    character (len =filenamelen),dimension(ncases-1)           :: filename
-!   character (len = *)                  ,intent(in):: filename
+    character (len =*),                  intent(in):: obsfilename
+    character (len =*),                  intent(in):: filename
+    !character (len =filenamelen),dimension(ncases-1)           :: filename
     integer,intent(in) :: nregs    ! total number of regs  we are gonna analysis
     integer,intent(in) :: ncrt     ! total number of crts
     integer,intent(in) :: nlon,nlat
@@ -150,6 +153,7 @@ module cs_stat
     real               ,dimension(nlat,nlon)      ,intent(in) ::regmap    ! WATCH OUT! the variables from python is C-order!
     integer,               intent(in)  :: n_bin
     real,                  intent(in)  :: x_min,x_max
+    !real,optional,         intent(in)  :: pdfcrt
 !   real ,dimension(n_bin,nregs,nperiods,nyears,ncases),intent(out),optional::pdf_yearly
 
     integer, parameter :: dims = 4
@@ -164,23 +168,29 @@ module cs_stat
     real, dimension(:, :,:),allocatable             :: data_sim
     real, dimension(nlandpoints)                    :: temp_1d
     real, dimension(nyears,nlandpoints)             :: temp_2d
+    !real, dimension(ntime,nlandpoints)              :: temp_2d_daily
     real, dimension(nlon,nlat,nyears)               :: temp_3d
     real ,dimension(n_bin,nregs,nperiods,nyears,ncases)                     ::pdf_yearly
     real, dimension(1)                              :: firstday_obs,firstday ! first day of each dataset
     integer :: dim_loc
     integer :: beg_cur,icrt,it,lastindex_s 
     integer, dimension(ntime):: tindex_sim,tindex_obs
-    real    :: crt_lo,crt_up
+    real    :: crt_lo,crt_up , pdfcrt
+    pdfcrt=1
 
+    print*,"pdfcrt",pdfcrt
     print*,"nlon=",nlon,"nlat=",nlat
     print*,"cutpoints=",cutpoints
+    print*,"ntime=",ntime
+    if ( allocated(data_obs)) deallocate(data_obs)
+    if ( allocated(data_sim)) deallocate(data_sim)
     allocate(data_obs(nlon,nlat,ntime))
     allocate(data_sim(nlon,nlat,ntime))
     ets_output(:,:,:,:,:)=0.0
 
     ! read in obs
 
-    call check( nf90_open(obsfilename, NF90_NOWRITE, ncid) )
+    call check( nf90_open(trim(obsfilename), NF90_NOWRITE, ncid) )
     call check( nf90_inq_varid(ncid, "time", varid) )
     count(1:1) = (/ 1/); start(1:1) = (/ 1/)
     call check( nf90_get_var(ncid, varid, firstday_obs,start, count) )
@@ -193,8 +203,10 @@ module cs_stat
     call check( nf90_get_var(ncid, varid, data_obs,start, count) )
     call check( nf90_close(ncid) )
     do icase=1,ncases-1
-      print*,"Reading and anlysis daily:"//trim(filename(icase))
-      call check( nf90_open(filename(icase), NF90_NOWRITE, ncid) )
+      print*,"Reading and anlysis daily:"//trim(filename(ch_begs(icase):ch_ends(icase)))
+      call check( nf90_open(trim(filename(ch_begs(icase):ch_ends(icase))), NF90_NOWRITE, ncid) )
+      !print*,"Reading and anlysis daily:"//trim(filename(icase))
+      !call check( nf90_open(trim(filename(icase)), NF90_NOWRITE, ncid) )
       call check( nf90_inq_varid(ncid, "time", varid) )
       count(1:1) = (/ 1/); start(1:1) = (/ 1/)
       call check( nf90_get_var(ncid, varid, firstday,start, count) )
@@ -218,7 +230,7 @@ module cs_stat
         print*,firstday(1)
         call check( nf90_get_var(ncid, varid, data_sim,start(1:4), count(1:4)) )
       else
-        stop"dim is incorrect"
+        stop "dim is incorrect"
       end if
 
       call check( nf90_close(ncid) )
@@ -255,12 +267,11 @@ module cs_stat
                 end if
               enddo 
             enddo 
-          elseif (trim(methodname)=="ets") then
+          elseif (trim(methodname)=="ets".or.trim(methodname)=="pdf") then
             do it=beg_cur,beg_cur+nt-1
               tindex_obs(it)=beg_ind_obs+it-beg_cur
               tindex_sim(it)=beg_ind_sim+it-beg_cur
             end do
-            print*,beg_cur,nt
             beg_cur=beg_cur+nt
           else
             print*,("No such option, you have to choose between cor,ets and rmse")
@@ -313,6 +324,23 @@ module cs_stat
             enddo 
           enddo 
           print*,"finished season number:",iperiod
+        elseif (trim(methodname)=="pdf") then
+          print*,"beg PDF ananlysis for case#:",icase
+          lastindex_s=beg_cur-1
+          call dailyregcombine(n_bin=n_bin,nregs=nregs,nlat=nlat,nlon=nlon,&
+                              ntime=ntime,nlandpoints=nlandpoints,&
+                              regmap=regmap,lastindex_s=lastindex_s,&
+                              tindex=tindex_sim(1:lastindex_s),data_3d=data_sim,       &
+                              pdf=pdf(:,:,iperiod,icase+1),pdfcrt=pdfcrt)
+!          call dailyregcombine(n_bin,nregs,nlat,nlon,ntime,nlandpoints,&
+!                               regmap,lastindex_s,tindex_sim(1:lastindex_s),data_sim, &
+!                               temp_2d_daily,                          &
+!                               pdf(:,:,iperiod,icase))
+          if (icase==1) then
+            call dailyregcombine(n_bin,nregs,nlat,nlon,ntime,nlandpoints,&
+                                 regmap,lastindex_s,tindex_obs(1:lastindex_s),data_obs, &
+                                 pdf(:,:,iperiod,1) ,pdfcrt)
+          endif
         elseif (.not.(ana_yearly==1)) then
           do ireg=1,nregs
             ipoint=0
@@ -327,12 +355,50 @@ module cs_stat
             call smaplesPDF_2d(temp_2d(:,1:ipoint),pdf(:,ireg,iperiod,icase),ipoint,nyears,n_bin,x_min,x_max)
           enddo 
         endif
-      enddo 
-    enddo 
+      enddo
+  enddo
+    deallocate(data_obs)
+    deallocate(data_sim)
 
    contains
-    subroutine smaplesPDF_2d(data_i,pdf,n,nt,n_bin,x_min,x_max)
+    subroutine dailyregcombine(n_bin,nregs,nlat,nlon,ntime,nlandpoints,&
+                              regmap,lastindex_s,tindex,data_3d,       &
+                              pdf,pdfcrt)
+       implicit none
+       real, dimension(:, :,:),intent(in)              :: data_3d
+       integer,intent(in)        :: n_bin,nregs,nlandpoints,nlat,nlon,lastindex_s,ntime
+       integer, dimension(:) ,intent(in)           :: tindex
+
+       real, dimension(:,:),allocatable                :: temp_2d_daily
+       real               ,dimension(nlat,nlon)      ,intent(in) ::regmap    ! WATCH OUT! the variables from python is C-order!
+       real ,dimension(n_bin,nregs),intent(out)        ::pdf
+       integer:: ireg,ipoint,i,j 
+       real   ::pdfcrt
+       !pdfcrt=1.0
+       
+       if ( allocated(temp_2d_daily)) deallocate(temp_2d_daily)
+       allocate(temp_2d_daily(lastindex_s,nlandpoints))
+       do ireg=1,nregs
+         ipoint=0
+         do i=1,nlat
+           do j=1,nlon
+             if (ireg==regmap(i,j)) then
+               ipoint=ipoint+1
+               temp_2d_daily(1:lastindex_s,ipoint)=data_3d(j,i,tindex(1:lastindex_s))
+               
+             end if
+           enddo 
+         enddo 
+         call smaplesPDF_2d(temp_2d_daily(1:lastindex_s,1:ipoint), &
+                            pdf(:,ireg),ipoint,lastindex_s,n_bin,x_min,x_max,pdfcrt)
+       enddo 
+       deallocate(temp_2d_daily)
+
+    end subroutine dailyregcombine
+
+    subroutine smaplesPDF_2d(data_i,pdf,n,nt,n_bin,x_min,x_max,pdfcrt)
       ! this is a function which can estimate smaple points' pdf 
+      real, optional        ,intent(in)  :: pdfcrt
       real, dimension(nt,n) ,intent(in)  :: data_i
       real, dimension(n_bin),intent(out) :: pdf
       integer,               intent(in)  :: n
@@ -342,6 +408,7 @@ module cs_stat
       integer                      :: bin_i
       real                         :: bin_size
       real                         :: x_ub,x_lb
+      integer                      :: nvalide
       if (x_max>x_min) then
         bin_size=(x_max-x_min)/n_bin
         pdf(:)=0.0
@@ -356,7 +423,27 @@ module cs_stat
             end do
           end do
         end do
-        pdf(:)=pdf(:)/n/nt !/(bin_size)*100.0
+        if (present(pdfcrt))then
+          if(pdfcrt<x_min)then
+            print*,"Unreasonable setting!x_min should be larger than pdfcrt!"
+            stop
+          endif
+          nvalide=0
+          do i=1,n
+            do j=1,nt
+              if (pdfcrt<=data_i(j,i)) then
+                nvalide=nvalide+1
+              endif
+            end do
+          end do
+          if(nvalide>0) then
+            pdf(:)=pdf(:)/nvalide
+          else
+            pdf(:)=0.0
+          endif
+        else
+          pdf(:)=pdf(:)/n/nt !/(bin_size)*100.0
+       endif
       else
         print*,"input x_max should be larger thant x_min"
         stop
@@ -1172,9 +1259,13 @@ end subroutine
            crt_lo=crts(icrt)
            if (icrt<ncrt) then
              crt_up=crts(icrt+1)
-             call etscalculator_2d(obs=obs(y,m,:,:),sim=sim(y,m,:,:),crt_up=crt_up,crt_lo=crt_lo,ets=ets(icrt,t),nx=nx,ny=ny,mask=mask,maskval=maskval)
+             call etscalculator_2d(obs=obs(y,m,:,:),sim=sim(y,m,:,:),&
+                  crt_up=crt_up,crt_lo=crt_lo,ets=ets(icrt,t),&
+                  nx=nx,ny=ny,mask=mask,maskval=maskval)
            else
-             call etscalculator_2d(obs=obs(y,m,:,:),sim=sim(y,m,:,:),crt_lo=crt_lo,ets=ets(icrt,t),nx=nx,ny=ny,mask=mask,maskval=maskval)
+             call etscalculator_2d(obs=obs(y,m,:,:),sim=sim(y,m,:,:),&
+                  crt_lo=crt_lo,ets=ets(icrt,t),&
+                  nx=nx,ny=ny,mask=mask,maskval=maskval)
            endif
          enddo
         t=t+1
