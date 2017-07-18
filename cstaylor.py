@@ -48,7 +48,7 @@ def seasonaltaylor(data,vname):
       morder=-1
       for i,case in  enumerate(data.cases):
         if case!=data.obsname:
-          for ireg in range(int(data.nregs)+1):
+          for ireg in range(int(data.nplotregs)+1):
 #         for ireg in range(1):
             regname=str("".join(data.regnames[ireg-1]))
             stddev, corrcoef=data.plotdata[case][vname][ireg,iseason,:]
@@ -114,7 +114,7 @@ def combinedtaylor(data):
   #colorseason={"DJF":"blue","MAM":"green","JJA":"red","SON":"purple"}
   dia ={} 
   csetting={1:{'w':0.23,'loc':0},3:{'w':0.4,'loc':1}}
-  for ireg in range(int(data.nregs)+1):
+  for ireg in range(int(data.nplotregs)+1):
     for ivname,vname in enumerate(data.vnames):
       dia[vname] = td.TaylorDiagram(stdrefs, fig=fig, rect=rects[vname] ,
                             label='Obs')
@@ -165,12 +165,12 @@ def writedata(data,vname):
   import pandas as pd
   outputlist=[case for case in data.cases if case!=data.obsname]
   writer = pd.ExcelWriter('Std-Cor_'+vname+'.xlsx')
-  outputstd=np.zeros((len(outputlist)*(int(data.nregs)+1),len(seasonname)))
-  outputcor=np.zeros((len(outputlist)*(int(data.nregs)+1),len(seasonname)))
+  outputstd=np.zeros((len(outputlist)*(int(data.nplotregs)+1),len(seasonname)))
+  outputcor=np.zeros((len(outputlist)*(int(data.nplotregs)+1),len(seasonname)))
   for iseason, season in enumerate(seasonname):
     idex=0
     for icase,case in  enumerate(outputlist):
-      for ireg in range(int(data.nregs)+1):
+      for ireg in range(int(data.nplotregs)+1):
         stddev, corrcoef=data.plotdata[case][vname][ireg,iseason,:]
         outputstd[idex,iseason]=stddev
         outputcor[idex,iseason]=corrcoef
@@ -178,7 +178,7 @@ def writedata(data,vname):
 
   outputindex=[]
   for icase,case in  enumerate(outputlist):
-    for ireg in range(int(data.nregs)+1):
+    for ireg in range(int(data.nplotregs)+1):
       regname=str("".join(data.regnames[ireg-1])) if ireg>0 else "whole"
       outputindex.append(sim_nicename[case]+":"+regname)
   dfstd = pd.DataFrame(outputstd, index=outputindex,columns=seasonname)

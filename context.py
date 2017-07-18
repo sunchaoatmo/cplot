@@ -89,9 +89,8 @@ class reginalmetfield(field):
     masktemp[self.lon<100]=1
     self.eastmask=masktemp
     self.buildregmap()
-    #np.append(self.regmap,masktemp,axis=0)
     self.regnames=[str("".join(name)) for name in self.regnames]
-    self.nregs=len(self.regnames)
+    #self.nregs=len(self.regnames)
 
   def buildregmap(self):
     import numpy as np
@@ -146,7 +145,11 @@ class reginalmetfield(field):
         try:
           fnc     =Dataset(filename,"r")
         except:
-          sys.exit("there is no %s"%filename)
+          if vname in ["PRAVG","PCT","CDD","RAINYDAYS","R10"]: 
+            filename="%s/%s_%s_%s.nc"%(self.datapath,case,vname,self.period)
+            fnc     =Dataset(filename,"r")
+          else:
+            sys.exit("there is no %s"%filename)
         YB=int(fnc.variables["time"][ 0])
         dimsize=fnc.variables[vname].shape
 
