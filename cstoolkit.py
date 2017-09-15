@@ -86,7 +86,10 @@ class cwrfplot:
           segs[irecord].append(lonlat[index2:])
     return segs
 
-  def contourmap(self,data,ax,cleve,cmp, ylabels=None,sidenamefontsize=10 ,terrain=None ,text=None,):
+  def contourmap(self,data,ax,cleve,cmp,
+                 season_x=0.5,season_y=0.8,
+                 case_x=0.02,case_y=0.05,
+                 ylabels=None,sidenamefontsize=10 ,terrain=None ,text=None,):
     # setup lambert conformal basemap.
     # lat_1 is first standard parallel.
     # lat_2 is second standard parallel (defaults to lat_1).
@@ -104,13 +107,12 @@ class cwrfplot:
     self.m.drawcoastlines(linewidth=0.08,  color='k', antialiased=1, ax=None, zorder=None)
     self.m.drawstates(linewidth=0.08,  color='k') 
     import matplotlib.colors as mc
-#   norm = mc.BoundaryNorm(cleve, 256)
     norm = mc.BoundaryNorm(cleve, cmp.N)
     #norm = mc.BoundaryNorm(cleve, len(cleve))
     #cs = self.m.contourf(self.x,self.y,data,cmap=cmp ,norm=norm,extend='max') #,extend='both')
     cs = self.m.contourf(self.x,self.y,data,cleve,cmap=cmp ,norm=norm,extend=self.extend) #,extend='both')
     if text is not None:
-      ax.text(0.5, 0.8, text,
+      ax.text(season_x, season_y, text,
            verticalalignment='bottom', horizontalalignment='center',
            transform=ax.transAxes,
            fontsize=sidenamefontsize, fontweight='bold')
@@ -121,11 +123,10 @@ class cwrfplot:
     for axis in ['top','bottom','left','right']:
       ax.spines[axis].set_linewidth(0.01)
     if ylabels:
-      ax.text(0.02, 0.05, ylabels,
+      ax.text(case_x,case_y, ylabels,
            verticalalignment='bottom', horizontalalignment='left',
            transform=ax.transAxes,
            fontsize=sidenamefontsize, fontweight='bold')
-#      ax.set_ylabel(ylabels, fontsize=sidenamefontsize, fontweight='bold')
     [i.set_linewidth(0.1) for i in ax.spines.itervalues()]
     return (cs);
 
