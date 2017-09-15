@@ -433,6 +433,9 @@ sim_nicename={"ERI":"ERI",
               "Xcor":"Cor between ori of",
               "Xcorbias":"Cor between bias of",
              "RegCM":"RegCM4.6",
+             "CDD":"Drought Duration",
+             "PCT":"Extreme Precipitation",
+             "RAINYDAYS":"Days with Precipitation",
              "T2MAX":"T2X",
              "AT2M" :"T2M",
              "T2MIN":"T2N",
@@ -440,7 +443,7 @@ sim_nicename={"ERI":"ERI",
              "AT2M97":"A97",
              "SDII":"DI",
              "CN_OBS":"OBS",
-             "RAINYDAYS":"RD",
+             #"RAINYDAYS":"RD",
              "run_RegCM4.6":"RegCM\n4.6",
              "run_RegCM4.5":"RegCM\n4.5",
              "ERI_run_0":"old CWRF",
@@ -828,6 +831,8 @@ plotres['PrMAX']['violion']=True
 plotres['PRAVG']['cmp1']=cmap_cs_precp
 cmp   =plt.get_cmap('Spectral_r');cmp.set_over('maroon');cmp.set_under('w')
 plotres['PRAVG']['cmp3']=plt.get_cmap('RdYlBu_r') #cmap_WBGYR #plt.get_cmap('jet')
+cmp   =cmap_BWR
+plotres['PRAVG']['cmp2']=cmp
 plotres['PRAVG']['unit']="mm/day"
 plotres['PRAVG']['violion']=True
 
