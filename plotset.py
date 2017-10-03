@@ -409,7 +409,7 @@ tableau20 = [ (127, 127, 127),(174, 199, 232),  (31, 119, 180), (255, 187, 120),
               (214, 39, 40),(152, 223, 138), (44, 160, 44), (255, 152, 150),    
              (148, 103, 189), (197, 176, 213), (140, 86, 75), (196, 156, 148),    
              (227, 119, 194), (247, 182, 210), (255, 127, 14),(199, 199, 199),    
-             (188, 189, 34), (219, 219, 141), (23, 190, 207), (158, 218, 229),(65,68,81)]    
+             (188, 189, 34), (219, 219, 141), (23, 190, 207), (158, 218, 229),(65,68,81),(0,0,0)]    
  
 def buildcmp(cmaplist):
   for i in range(len(cmaplist)):    
@@ -436,6 +436,17 @@ sim_nicename={"ERI":"ERI",
              "CDD":"Drought Duration",
              "PCT":"Extreme Precipitation",
              "RAINYDAYS":"Days with Precipitation",
+             "NX":"North Xinjiang",
+             "SX":"South Xinjiang",
+             "WT":"West Tibet",
+             "ET":"East Tibet",
+             "ST":"South Tibet",
+             "IM":"Inner Mongolia",
+             "SW":"Southwest",
+             "NE":"Northeast",
+             "NC":"North China",
+             "CC":"Central China",
+             "SC":"South China",
              "T2MAX":"T2X",
              "AT2M" :"T2M",
              "T2MIN":"T2N",
