@@ -61,9 +61,12 @@ def meanplot(data,vname):
     pp = PdfPages(filename+'.pdf')
   else:
     page=0
-  fig = plt.figure(figsize=(8.5,12))
-  gs0 = gridspec.GridSpec(1,1 )
-  ax1 = plt.subplot(gs0[0])
+  #fig = plt.figure(figsize=(15,12))
+  fig = plt.figure(figsize=(11.69,8.27))
+  gs0 = gridspec.GridSpec(12,60 )
+  ax1 = plt.subplot(gs0[:,12:])
+  #gs0 = gridspec.GridSpec(12,16 )
+  #ax1 = plt.subplot(gs0[:,3:16])
   Setting={}
   Setting["PRAVG"]={}
   Setting["PRAVG"]["interval_h"]=3
@@ -76,12 +79,22 @@ def meanplot(data,vname):
   Setting["AT2M"]["und"]=0
   Setting["AT2M"]["upp"]=2
   Setting["AT2M"]["interval"]=6
-  Setting["AT2M"]["yadd"]=9
+  Setting["AT2M"]["yadd"]=6
 
   interval_h=Setting[vname]["interval_h"]
   interval=Setting[vname]["interval"]
+  x_up=data.plotdata[data.cases[0]][vname][0].shape[1]
+  x_extra=10
+  yloc_regname=-1
 
   months=(data.ye-data.yb+1)*12
+  suptitle="%s %s*std markers"%(data.title[vname],data.nstd)
+  fontsizetitle=16
+  fontsizetick=9
+  fontsizereg=9
+  fontsizeleg=15
+  fontsizeCC=9
+  fig.suptitle(suptitle, fontsize=fontsizetitle, fontweight='bold')
   for casenumber,case in enumerate(data.cases):
     legname = sim_nicename.get(case,case)
     color=data.casecolors[case]  
@@ -91,22 +104,29 @@ def meanplot(data,vname):
     for yloc,regname in enumerate(data.plotregnames):
       print(yloc,regname)
       ireg=data.regnames.index(regname)
-      plt.axhline(interval*ireg, color='black',lw=0.1,ls=":")
-      if ireg==0:
-        plt.plot(interval*yloc+data.plotdata[case][vname][0][ireg],label=sidename,lw=0.5,color=color,zorder=zorder,ls=ls)
-        #plt.plot(xdate,interval*ireg+data.plotdata[case][vname][0][ireg],label=sidename,lw=0.5,color=color,zorder=zorder)
+      plt.axhline(interval*yloc, color='black',lw=0.1,ls=":")
+      y_org=data.plotdata[case][vname][0][ireg]
+      y_obs=data.plotdata["CN_OBS"][vname][0][ireg]
+      y_shift=interval*yloc
+      yplot=y_shift+y_org
+      if "OBS" not in case:
+        abnormal=list(np.where(np.abs(y_org-y_obs)>data.nstd))
       else:
-        plt.plot(interval*yloc+data.plotdata[case][vname][0][ireg],lw=0.5,color=color,zorder=zorder,ls=ls)
+        abnormal=[]
+      if yloc==0:
+        plt.plot(yplot,label=sidename,lw=0.5,color=color,zorder=zorder,ls=ls,marker="o",markevery=abnormal,markerfacecolor="None",ms=4.5)
+      else:
+        plt.plot(yplot,lw=0.5,color=color,zorder=zorder,ls=ls,marker="o",markevery=abnormal,markerfacecolor="None",ms=4.5)
       if casenumber==0:
         cc1=float(np.corrcoef(data.plotdata["new_ERI_albedo"][vname][0][ireg],data.plotdata[data.obsname][vname][0][ireg])[0,1])
         cc2=float(np.corrcoef(data.plotdata["RegCM"][vname][0][ireg],data.plotdata[data.obsname][vname][0][ireg])[0,1])
-        ax1.text(-5, interval*yloc, regname,fontsize=6,
-           verticalalignment='center', horizontalalignment='right',
-           rotation="vertical")
-        ax1.text(10, interval_h+interval*yloc, "$CC=%0.2f$"%cc1,fontsize=6,
+        #ax1.text(-5, interval*yloc, sim_nicename.get(regname,regname),fontsize=12,
+        #   verticalalignment='center', horizontalalignment='right',
+        #   rotation="vertical")
+        ax1.text(10, interval_h+interval*yloc, "$Cor=%0.2f$"%cc1,fontsize=fontsizeCC,
            verticalalignment='center', horizontalalignment='left',
            color=data.casecolors["new_ERI_albedo"])
-        ax1.text(50, interval_h+interval*yloc,"$CC=%0.2f$"%cc2,fontsize=6,
+        ax1.text(50, interval_h+interval*yloc,"$Cor=%0.2f$"%cc2,fontsize=fontsizeCC,
            verticalalignment='center', horizontalalignment='left',
            color=data.casecolors["RegCM"])
 
@@ -118,7 +138,8 @@ def meanplot(data,vname):
     for yshift in yshifts:
       y=ireg*interval+yshift
       ylab=yshift if yshift<yshifts[-1] else ''
-      ax1.text(-0, y, ylab,fontsize=5,rotation="vertical",
+      #ax1.text(-0, y, ylab,fontsize=fontsizetick,#rotation="vertical",
+      ax1.text(x_up+x_extra, y, ylab,fontsize=fontsizetick,#rotation="vertical",
       verticalalignment='center', horizontalalignment='right') #,
       tickloc_y.append(y)
   #ax1.yaxis.set_minor_locator(minorLocator)
@@ -131,8 +152,8 @@ def meanplot(data,vname):
   ticklabels=[]
   for year in range(data.yb,data.ye+1):
     ticklabels.append("%s"%(year))
-  ax1.set_xticklabels(ticklabels,fontsize=5,rotation="vertical")
-  tickloc=[x for x  in range(0,int(months))]
+  ax1.set_xticklabels(ticklabels,fontsize=fontsizetick,rotation="vertical")
+  tickloc=[x for x  in range(0,int(months),6)]
   ax1.set_xticks(tickloc,minor=True)
   plt.tick_params(
         which='both',      # both major and minor ticks are affected
@@ -141,48 +162,32 @@ def meanplot(data,vname):
         bottom='on',         # ticks along the top edge are off
         left='on',         # ticks along the top edge are off
         labelleft='off',         # ticks along the top edge are off
-        top='off',         # ticks along the top edge are off
-        length=2,width=0.6)
+        top='on',         # ticks along the top edge are off
+        length=4,width=0.6)
   plt.tick_params(
         which='minor',      # both major and minor ticks are affected
         direction="in",
         bottom='on',         # ticks along the top edge are off
         top='on',         # ticks along the top edge are off
-        length=1,width=0.6
+        length=2,width=0.6
         ) 
 
 
 
   #leg=ax1.legend(loc=1,borderaxespad=0.,frameon=False, fontsize=6)
-  ax1.legend(loc='upper center', bbox_to_anchor=(0.5, 0.99),
-            ncol=4, fancybox=True,  fontsize=6)
+  ax1.legend(loc='upper center',frameon=False, bbox_to_anchor=(0.5, 1.0),
+            ncol=4,  fontsize=fontsizeleg,markerscale=0)
   for axis in ['top','bottom','left','right']:
     ax1.spines[axis].set_linewidth(0.01)
   #plt.ylim([0.,50.0])
-  plt.ylim([-1-int(len(yshifts)/2),3+int((len(data.plotregnames)-1)*interval+len(yshifts)/2)])
-  plt.xlim([0.,data.plotdata[case][vname][0].shape[1]])
+  plt.ylim([-int(len(yshifts)/2),1+int((len(data.plotregnames)-1)*interval+len(yshifts)/2)])
+  plt.xlim([0.,x_up])
+  #plt.xlim([0.,data.plotdata[case][vname][0].shape[1]])
 
-  if outputformat=="pdf":
-    pp.savefig()
-  else:
-    figurename=filename+str(page)+"."+outputformat
-    page+=1
-    fig.savefig(figurename,format=outputformat,dpi=300) #,dpi=300)
-  fig.clf()
-  if outputformat=="pdf":
-    pp.close()
-def monthlystdfillplot(data,vname):
   from constant import monthname 
   import numpy as np
   from math import ceil 
-  filename=data.plotname+"_"+"".join(vname)+"_std"
-  if data.outputformat=="pdf":
-    pp = PdfPages(filename+'.pdf')
-  else:
-    page=0
-  fig = plt.figure(figsize=(2.,20))
-  gs0 = gridspec.GridSpec(1,1 )
-  ax1 = plt.subplot(gs0[0])
+  ax2 = plt.subplot(gs0[:,1:11])
 
   Setting={}
   Setting["PRAVG"]={}
@@ -194,18 +199,20 @@ def monthlystdfillplot(data,vname):
   Setting["PRAVG"]["shiftylabel"]=1
   Setting["PRAVG"]["y_down"]=0
   Setting["PRAVG"]["extra"]=2
-  Setting["PRAVG"]["y_up"]=int((len(data.plotregnames)-1)*(2*Setting["PRAVG"]["interval_h"]+1))+Setting["PRAVG"]["yadd"]
+  Setting["PRAVG"]["y_up"]=int((len(data.plotregnames)-1)*(2*Setting["PRAVG"]["interval_h"]+1)) +5#+Setting["PRAVG"]["yadd"]
 
   Setting["AT2M"]={}
   Setting["AT2M"]["interval_h"]=5
   Setting["AT2M"]["und"]=-1
   Setting["AT2M"]["upp"]=1
   Setting["AT2M"]["ytcik_interval"]=2
-  Setting["AT2M"]["yadd"]=-2
+  Setting["AT2M"]["yadd"]=2.5
   Setting["AT2M"]["shiftylabel"]=0
-  Setting["AT2M"]["y_down"]=-3# -Setting["AT2M"]["interval_h"]
+  Setting["AT2M"]["y_down"]=-5# -Setting["AT2M"]["interval_h"]
+  #Setting["AT2M"]["y_down"]=-3# -Setting["AT2M"]["interval_h"]
   Setting["AT2M"]["extra"]=1
   Setting["AT2M"]["y_up"]=int((len(data.plotregnames)-1)*(2*Setting["AT2M"]["interval_h"]+1))+Setting["AT2M"]["yadd"]
+  #Setting["AT2M"]["y_up"]=int((len(data.plotregnames)-1)*(2*Setting["AT2M"]["interval_h"]+1))+Setting["AT2M"]["yadd"]
   shiftylabel=Setting[vname]["shiftylabel"]
   frameshifts={}
   frameshifts["AT2M"]={"ST":4,"WT":4,"SX":2}
@@ -231,7 +238,7 @@ def monthlystdfillplot(data,vname):
         y=data.plotdata[case][vname][1][ireg]
       y_real=interval*yloc+y+frameshifts[vname].get(regname,0) 
       #y_real=interval*ireg+y
-      if ireg==0:
+      if yloc==0:
         plt.plot(y_real,label=sidename,lw=0.5,color=color,zorder=zorder,ls=ls)
       else:
         plt.plot(y_real,lw=0.5,color=color,zorder=zorder,ls=ls)
@@ -239,12 +246,16 @@ def monthlystdfillplot(data,vname):
                         y_real-std,
                         y_real+std,
                         alpha=0.3,lw=0.5,color=color,zorder=zorder)
+      """
       if casenumber==0:
-        #ax1.text(-0.3, shiftylabel*interval_h+interval*yloc, regname,fontsize=6,
-        #ax1.text(6, shiftylabel*interval_h+interval*yloc, regname,fontsize=6,
-        ax1.text(6, interval*yloc+1, regname,fontsize=6,
+        ax2.text(6, interval*yloc+1, regname,fontsize=fontsizetick,
            verticalalignment='center', horizontalalignment='right' ) #,
            #rotation="vertical")
+      """
+      textloc=interval*yloc if vname=="AT2M" else interval*(yloc+0.5)
+      ax2.text(yloc_regname, textloc, sim_nicename.get(regname,regname),fontsize=fontsizereg,
+           verticalalignment='center', horizontalalignment='right',
+           rotation="vertical")
   yshifts=[x for x in range(int(interval_h)*Setting[vname]["und"]+Setting[vname]["extra"]
                             ,int(interval_h)*Setting[vname]["upp"]+Setting[vname]["extra"]
                             ,Setting[vname]["ytcik_interval"])]
@@ -255,15 +266,15 @@ def monthlystdfillplot(data,vname):
       y=yloc*interval+yshift
       if y>y_down and y<y_up:
         ylab=yshift-frameshifts[vname].get(regname,0)
-        ax1.text(-0, y, ylab,fontsize=5,rotation="vertical",
+        ax2.text(-0, y, ylab,fontsize=fontsizetick, #rotation="vertical",
         verticalalignment='center', horizontalalignment='right') #,
         tickloc_y.append(y)
-  ax1.set_yticks(tickloc_y)
+  ax2.set_yticks(tickloc_y)
 
   tickloc=[x for x  in range(0,len(monthname))]
-  ax1.set_xticks(tickloc)
-  ax1.set_xticklabels(monthname,fontsize=5,rotation="vertical")
-  ax1.set_xticks(tickloc,minor=True)
+  ax2.set_xticks(tickloc)
+  ax2.set_xticklabels(monthname,fontsize=fontsizetick,rotation="vertical")
+  ax2.set_xticks(tickloc,minor=True)
   plt.tick_params(
         which='both',      # both major and minor ticks are affected
         direction="in",
@@ -281,21 +292,18 @@ def monthlystdfillplot(data,vname):
         length=1,width=0.6
         ) 
 
-  ax1.legend(loc='upper center',#, bbox_to_anchor=(0.1, 0.95), #,1.3,0.05),
-            #mode="expand",
-            ncol=1, fancybox=True,  fontsize=6)
   for axis in ['top','bottom','left','right']:
-    ax1.spines[axis].set_linewidth(0.01)
+    ax2.spines[axis].set_linewidth(0.01)
   plt.ylim([y_down,y_up])
   plt.xlim([0.,11])
 
   if data.outputformat=="pdf":
     pp.savefig()
+    #pp.savefig(bbox_inches='tight')
   else:
     figurename=filename+str(page)+"."+outputformat
     page+=1
     fig.savefig(figurename,format=outputformat,dpi=300) #,dpi=300)
-  fig.clf()
   if data.outputformat=="pdf":
     pp.close()
   print("finished plot climate monthly data!")
