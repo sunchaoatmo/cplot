@@ -61,10 +61,11 @@ def seasonaltaylor(data,vname):
             else:
               morder+= 1  #(i-3)%24 #(int((name.replace("run_",""))))%24
               #marker='$%s$' % chr( ord('a')+i*(data.nregs+1)+ireg)
-            color1=tableau20[2*i] if i<10 else 'b'
-            #color1=tableau20[2*ireg] if ireg<10 else 'b'
+              marker='$%s$' % chr( ord('a')+i-2)
+            #color1=data.tcolor[i]
+            color1=tableau20[2*ireg] if ireg<10 else 'b'
             labelname= sim_nicename[case] if case in sim_nicename else case
-            marker='$%s$' % labelname[0]
+            #marker='$%s$' % labelname[0]
             labelname= regname+"  "+labelname if ireg >0 else labelname
             dia.add_sample(stddev, corrcoef,
                            marker=marker, markersize=ms, ls='',
@@ -114,6 +115,7 @@ def combinedtaylor(data):
   #colorseason={"DJF":"blue","MAM":"green","JJA":"red","SON":"purple"}
   dia ={} 
   csetting={1:{'w':0.23,'loc':0},3:{'w':0.4,'loc':1}}
+  width   ={4:0.2,5:1.5}
   for ireg in range(int(data.nplotregs)+1):
     for ivname,vname in enumerate(data.vnames):
       dia[vname] = td.TaylorDiagram(stdrefs, fig=fig, rect=rects[vname] ,
@@ -131,12 +133,15 @@ def combinedtaylor(data):
             elif "RegCM" in case:
               marker="s"
               ms =8
+            elif "ERI_CAR" in case:
+              marker="o"
+              ms =8
             else:
               ms=12
               zorder=100
               marker="*"
             color1=colorseason[season]
-            labelname=season if i==3 else " "
+            labelname=season if i==len(data.cases)-1 else " "
             ph.append(dia[vname].add_sample(stddev, corrcoef,
                          marker=marker, markersize=ms, ls='',
                          mfc=color1, mec=color1, # Colors
@@ -148,13 +153,17 @@ def combinedtaylor(data):
           dia[vname]._ax.set_ylabel("Normalized STD",fontsize=12,  fontweight='bold')
           plt.text(0.85, 0.03, sim_nicename.get(vname,vname),transform = dia[vname]._ax.transAxes,zorder=1000,fontsize=12)
       
-    leg=dia[data.vnames[csetting[len(data.vnames)]['loc']]]._ax.legend( ph, [ p.get_label() for p in ph], 
+    #leg=dia[data.vnames[csetting[len(data.vnames)]['loc']]]._ax.legend( ph, [ p.get_label() for p in ph], 
+    leg=dia[data.vnames[0]]._ax.legend( ph, [ p.get_label() for p in ph], 
                frameon=True, mode="expand",fancybox=True, framealpha=1,numpoints=1, 
-               loc="upper right",bbox_to_anchor=(0.6, 0.95,csetting[len(data.vnames)]['w'],0.2), ncol=3)
+               bbox_to_anchor=(0.6, 0.6,0.6,0.8), ncol=len(data.cases)-1)
                #loc="upper right",bbox_to_anchor=(0.6, 0.95,0.4,0.2), ncol=3)
     plt.setp(leg.texts, family="monospace")
                #frameon=True, mode=None,fancybox=True, framealpha=1,numpoints=1, loc="upper right",bbox_to_anchor=(1.25, 1.3), ncol=3)
-    leg.set_title("ERI   CWRF   RegCM4", prop = {'size':10})
+    if (len(data.cases))==4:
+      leg.set_title("ERI   CWRF   RegCM4", prop = {'size':10})
+    elif (len(data.cases))==5:
+      leg.set_title("ERI   CWRF  CWRF_CAR RegCM4", prop = {'size':10})
     #leg.set_title("ERI   CWRF ", prop = {'size':10})
 # plt.show()
     regname=str("".join(data.regnames[ireg-1]))
