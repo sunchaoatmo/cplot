@@ -56,10 +56,10 @@ def hovplot(data,vname):
     #else:
     #  ax.set_xticks( [] )
     #  ax.set_xticklabels([],weight='bold',color='brown')
-    ax.text(0.1, 0.9, sim_nicename[case],
+    ax.text(0.3, 0.9, sim_nicename[case],
          verticalalignment='bottom', horizontalalignment='center',
          transform=ax.transAxes, fontweight='bold')
-    if icase%ncols==0:
+    if icase==0 or  icase==3:
       ax.set_yticks( range(0,len(xlat),10) )
       ax.set_yticklabels(("%s$^\circ$ N"%int(x) for x in xlat[::10]))
     else:
