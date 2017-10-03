@@ -11,7 +11,8 @@ class field(object):
     self.casecolors  =dict(zip(self.cases,[tableau20[ic] for ic in self.colors]))
     self.casealphas  =dict(zip(self.cases,self.alphas))
     self.casezorders  =dict(zip(self.cases,self.zorders))
-    self.caselinestyles  =dict(zip(self.cases,[ls[1:-1] for ls in self.linestyles]))
+    self.caselinestyles  =dict(zip(self.cases, self.linestyles))
+    #self.caselinestyles  =dict(zip(self.cases,[ls[1:-1] for ls in self.linestyles]))
     self.caseannu_begs  =dict(zip(self.cases,self.annu_begs))
 
       
@@ -86,7 +87,10 @@ class reginalmetfield(field):
 
     self.terrain =ma.masked_array(self.terrain,mask=self.mask)
     masktemp=np.copy(self.mask[:])
-    masktemp[self.lon<100]=1
+    if self.maskeast:
+      masktemp[self.lon<100]=1
+    else:
+      masktemp[:,:]=0
     self.eastmask=masktemp
     self.buildregmap()
     self.regnames=[str("".join(name)) for name in self.regnames]
@@ -136,11 +140,10 @@ class reginalmetfield(field):
     import sys
     for case in self.cases:
       for vname in self.vnames:
-        if vname not in ["PRAVG","PCT","CDD","RAINYDAYS","R10"]: 
+        if vname not in ["PRAVG","PCT","CDD","RAINYDAYS","R10","R5D","SDII"]: 
           filename="%s/%s_%s_%s.nc"%(self.datapath,case,vname,self.period)
         else:
           filename="%s/%s_%s_%s.nc"%(self.datapath,case,"PR",self.period)
-        print(filename)
 
         try:
           fnc     =Dataset(filename,"r")
@@ -305,6 +308,16 @@ class reginalmetfield(field):
     seasonalmap(self,vname,crt)
 
   def Plot(self):
+    if "comb" in self.plottype:
+      self.combplot()
+    else:
+      self.indiplot()
+
+  def combplot(self):
+    from cscontour import Varmaps
+    Varmaps(self)
+    
+  def indiplot(self):
     vnames=getattr(self,"xvnames",self.vnames)
     if self.plottype=="contour": # or self.plottype=="diff": 
       if self.method=="eof":
