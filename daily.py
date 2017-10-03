@@ -75,6 +75,7 @@ class daily_data(reginalmetfield):
           date_e=datetime(ye,me,de,0,0,0)
           beg_nday[iperiod,iyear]=date2num(date_b,units,calendar=calendar)
           end_nday[iperiod,iyear]=date2num(date_e,units,calendar=calendar)
+      beg_nday[0][0]=beg_nday[0][0]+1
       return beg_nday,end_nday
 
 
