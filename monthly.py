@@ -80,7 +80,6 @@ class monthly_data(reginalmetfield):
       for vname in self.vnames:
         etscontourf(self,vname)
     elif self.method=="mean":
-      from cstimeserial import meanplot,monthlystdfillplot
+      from cstimeserial import meanplot #,monthlystdfillplot
       for vname in self.vnames:
-        monthlystdfillplot(self,vname)
         meanplot(self,vname)
