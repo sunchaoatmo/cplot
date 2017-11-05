@@ -433,7 +433,7 @@ sim_nicename={"ERI":"ERI",
               "Xcor":"Cor between ori of",
               "Xcorbias":"Cor between bias of",
              "RegCM":"RegCM4.6",
-             "CDD":"Drought Duration",
+             "ConRatio":"Conv to Total Pr in PCT95 day",
              "PCT":"Extreme Precipitation",
              "RAINYDAYS":"Days with Precipitation",
              "NX":"North Xinjiang",
@@ -463,7 +463,7 @@ sim_nicename={"ERI":"ERI",
              "new_ERI_albedo":"CWRF",
 #             "new_ERI_gsfc":"CWRF\nGSFC",
              "new_ERI_morr":"Mor",
-             "run_00":"CWRF",
+             "run_00":"CTL",
              "xoml":"new_xoml",
              "run_01":"BMJ",
              "run_02":"NKF",
@@ -863,6 +863,13 @@ cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('w')
 plotres['PCT']['cmp2']=cmp
 plotres['PCT']['unit']="mm/day"
 plotres['PCT']['convertcoef']=1
+
+
+
+plotres['ConRatio']['cmp1']=cmap_cs_precp
+cmp   =plt.get_cmap('seismic');cmp.set_over('maroon');cmp.set_under('w')
+plotres['ConRatio']['cmp2']=cmp
+plotres['ConRatio']['unit']=""
 
 #plotres['PCT99']['cleve0']=[0,2,4,6,8,10,15,20,25,30,40,50,60]
 #plotres['PCT99']['cleve1']=[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,35,40,45,50]
